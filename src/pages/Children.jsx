@@ -6,6 +6,7 @@ import { Users, Plus, Upload, X, Calendar, Edit, Trash2, User } from 'lucide-rea
 
 const Children = () => {
   const [children, setChildren] = useState([])
+  const [childImageUrls, setChildImageUrls] = useState({})
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingChild, setEditingChild] = useState(null)
@@ -35,6 +36,11 @@ const Children = () => {
 
       if (error) throw error
       setChildren(data || [])
+      
+      // Load image URLs for children with images
+      if (data && data.length > 0) {
+        await loadChildImageUrls(data)
+      }
     } catch (error) {
       console.error('Error fetching children:', error)
       setError('Failed to load children')
@@ -43,12 +49,39 @@ const Children = () => {
     }
   }
 
-  const getChildImageUrl = (imagePath) => {
+  const loadChildImageUrls = async (childrenData) => {
+    const imageUrls = {}
+    
+    for (const child of childrenData) {
+      if (child.image_path) {
+        const url = await getChildImageUrl(child.image_path)
+        if (url) {
+          imageUrls[child.id] = url
+        }
+      }
+    }
+    
+    setChildImageUrls(imageUrls)
+  }
+
+  const getChildImageUrl = async (imagePath) => {
     if (!imagePath) return null
-    const { data } = supabase.storage
-      .from('child-images')
-      .getPublicUrl(imagePath)
-    return data.publicUrl
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from('child-images')
+        .createSignedUrl(imagePath, 3600) // 1 hour expiry
+      
+      if (error) {
+        console.error('Error creating signed URL:', error)
+        return null
+      }
+      
+      return data.signedUrl
+    } catch (error) {
+      console.error('Error getting image URL:', error)
+      return null
+    }
   }
 
   const calculateAge = (birthdate) => {
@@ -377,13 +410,19 @@ const Children = () => {
               <div key={child.id} className="bg-white border border-dad-blue-gray rounded-lg p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    {child.image_path ? (
+                    {child.image_path && childImageUrls[child.id] ? (
                       <img
-                        src={getChildImageUrl(child.image_path)}
+                        src={childImageUrls[child.id]}
                         alt={child.name}
                         className="w-12 h-12 object-cover rounded-full border border-dad-blue-gray"
+                        onError={(e) => {
+                          // If image fails to load, hide it and show default avatar
+                          e.target.style.display = 'none'
+                          e.target.nextSibling.style.display = 'flex'
+                        }}
                       />
-                    ) : (
+                    ) : null}
+                    {(!child.image_path || !childImageUrls[child.id]) && (
                       <div className="w-12 h-12 bg-dad-blue-gray bg-opacity-20 rounded-full flex items-center justify-center">
                         <User className="w-6 h-6 text-dad-blue-gray" />
                       </div>

@@ -10,7 +10,7 @@ import Videos from './pages/Videos'
 import Children from './pages/Children'
 import Settings from './pages/Settings'
 import About from './pages/About'
-import Notifications from './pages/Notifications'
+import Prompts from './pages/Prompts'
 
 function App() {
   return (
@@ -39,6 +39,11 @@ function App() {
               <Children />
             </ProtectedRoute>
           } />
+          <Route path="/prompts" element={
+            <ProtectedRoute>
+              <Prompts />
+            </ProtectedRoute>
+          } />
           <Route path="/settings" element={
             <ProtectedRoute>
               <Settings />
@@ -47,11 +52,6 @@ function App() {
           <Route path="/about" element={
             <ProtectedRoute>
               <About />
-            </ProtectedRoute>
-          } />
-          <Route path="/notifications" element={
-            <ProtectedRoute>
-              <Notifications />
             </ProtectedRoute>
           } />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

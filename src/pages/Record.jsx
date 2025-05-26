@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
-import { Video, Upload, Play, Square, ArrowLeft, Clock } from 'lucide-react'
+import { getRandomPrompts } from '../data/prompts'
+import { Video, Upload, Play, Square, ArrowLeft, Clock, Lightbulb, RefreshCw, X } from 'lucide-react'
 
 const Record = () => {
   const [isRecording, setIsRecording] = useState(false)
@@ -20,6 +21,12 @@ const Record = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [step, setStep] = useState(1) // 1: Record/Upload, 2: Assign & Configure
+  
+  // Ideas/Prompts functionality
+  const [showIdeasModal, setShowIdeasModal] = useState(false)
+  const [currentPrompts, setCurrentPrompts] = useState([])
+  const [selectedPrompt, setSelectedPrompt] = useState('')
+  const [showPromptOverlay, setShowPromptOverlay] = useState(false)
 
   const videoRef = useRef(null)
   const mediaRecorderRef = useRef(null)
@@ -29,9 +36,18 @@ const Record = () => {
 
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     fetchChildren()
+    
+    // Check if a prompt was passed from the Prompts page
+    if (location.state?.selectedPrompt) {
+      setSelectedPrompt(location.state.selectedPrompt)
+      setTitle(location.state.selectedPrompt)
+      setShowPromptOverlay(true)
+    }
+    
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop())
@@ -40,7 +56,7 @@ const Record = () => {
         clearInterval(intervalRef.current)
       }
     }
-  }, [])
+  }, [location.state])
 
   const fetchChildren = async () => {
     try {
@@ -55,6 +71,29 @@ const Record = () => {
     } catch (error) {
       console.error('Error fetching children:', error)
     }
+  }
+
+  const openIdeasModal = () => {
+    const randomPrompts = getRandomPrompts(5)
+    setCurrentPrompts(randomPrompts)
+    setShowIdeasModal(true)
+  }
+
+  const refreshIdeas = () => {
+    const randomPrompts = getRandomPrompts(5)
+    setCurrentPrompts(randomPrompts)
+  }
+
+  const selectPrompt = (prompt) => {
+    setSelectedPrompt(prompt)
+    setTitle(prompt)
+    setShowIdeasModal(false)
+    setShowPromptOverlay(true)
+  }
+
+  const clearPrompt = () => {
+    setSelectedPrompt('')
+    setShowPromptOverlay(false)
   }
 
   const startCameraPreview = async () => {
@@ -337,6 +376,36 @@ const Record = () => {
             )}
 
             <div className="bg-white border border-dad-blue-gray rounded-lg p-6 mb-6">
+              {/* Ideas Button */}
+              <div className="mb-4 flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-dad-dark">Recording Options</h3>
+                <button
+                  onClick={openIdeasModal}
+                  className="flex items-center px-4 py-2 bg-dad-accent text-white rounded-lg hover:bg-dad-dark transition-all duration-300"
+                >
+                  <Lightbulb className="w-4 h-4 mr-2" />
+                  Ideas
+                </button>
+              </div>
+
+              {/* Selected Prompt Display */}
+              {selectedPrompt && (
+                <div className="mb-4 p-4 bg-dad-warm rounded-lg border border-dad-accent">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-dad-dark mb-2">Recording Prompt:</h4>
+                      <p className="text-dad-olive">{selectedPrompt}</p>
+                    </div>
+                    <button
+                      onClick={clearPrompt}
+                      className="ml-2 text-dad-blue-gray hover:text-dad-dark"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="aspect-video bg-dad-dark rounded-lg mb-4 relative overflow-hidden">
                 <video
                   ref={videoRef}
@@ -345,6 +414,24 @@ const Record = () => {
                   muted={isRecording || showPreview}
                   controls={!isRecording && !showPreview && recordedBlob}
                 />
+                
+                {/* Prompt Overlay during recording */}
+                {isRecording && selectedPrompt && showPromptOverlay && (
+                  <div className="absolute top-4 left-4 right-4 bg-black bg-opacity-75 text-white p-4 rounded-lg">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-medium mb-2">Your Prompt:</h4>
+                        <p className="text-sm leading-relaxed">{selectedPrompt}</p>
+                      </div>
+                      <button
+                        onClick={() => setShowPromptOverlay(false)}
+                        className="ml-2 text-white hover:text-gray-300"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Recording indicator */}
                 {isRecording && (
@@ -372,6 +459,14 @@ const Record = () => {
               {showPreview && !isRecording && (
                 <div className="text-center mb-4">
                   <p className="text-dad-dark text-lg font-medium mb-3">Record your video</p>
+                  {selectedPrompt && (
+                    <button
+                      onClick={() => setShowPromptOverlay(true)}
+                      className="mb-3 text-dad-accent hover:text-dad-dark text-sm"
+                    >
+                      Show prompt during recording
+                    </button>
+                  )}
                   <button
                     onClick={startRecording}
                     className="bg-red-600 hover:bg-red-700 text-white rounded-full p-6 shadow-lg transition-all transform hover:scale-105"
@@ -439,6 +534,70 @@ const Record = () => {
             </div>
           </div>
         </div>
+
+        {/* Ideas Modal */}
+        {showIdeasModal && (
+          <div className="fixed inset-0 z-50 overflow-hidden">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+              onClick={() => setShowIdeasModal(false)}
+            ></div>
+            
+            {/* Modal */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[80vh] overflow-hidden">
+              <div className="bg-dad-white rounded-2xl shadow-strong border border-dad-blue-gray m-4">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-dad-blue-gray">
+                  <div className="flex items-center">
+                    <Lightbulb className="w-6 h-6 text-dad-accent mr-3" />
+                    <h3 className="text-xl font-heading font-bold text-dad-dark">Video Ideas</h3>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={refreshIdeas}
+                      className="flex items-center px-3 py-2 bg-dad-accent text-white rounded-lg hover:bg-dad-dark transition-all duration-300"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-1" />
+                      Refresh
+                    </button>
+                    <button
+                      onClick={() => setShowIdeasModal(false)}
+                      className="text-dad-olive hover:text-dad-dark transition-colors duration-300"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Prompts List */}
+                <div className="max-h-96 overflow-y-auto p-6">
+                  <p className="text-dad-olive mb-4">Choose a prompt to inspire your recording:</p>
+                  <div className="space-y-3">
+                    {currentPrompts.map((prompt, index) => (
+                      <button
+                        key={index}
+                        onClick={() => selectPrompt(prompt)}
+                        className="w-full text-left p-4 bg-dad-warm hover:bg-dad-blue-gray hover:bg-opacity-20 rounded-lg transition-all duration-300 border border-transparent hover:border-dad-accent"
+                      >
+                        <p className="text-dad-dark leading-relaxed">{prompt}</p>
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-6 pt-4 border-t border-dad-blue-gray">
+                    <button
+                      onClick={() => navigate('/prompts')}
+                      className="text-dad-accent hover:text-dad-dark font-medium"
+                    >
+                      View all prompts →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </Layout>
     )
   }

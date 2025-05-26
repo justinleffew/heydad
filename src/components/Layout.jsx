@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { LogOut, Video, Home, Users, Plus, Menu, X, Settings, Info, Bell } from 'lucide-react'
+import { LogOut, Video, Home, Users, Plus, Menu, X, Settings, Info, Bell, Lightbulb } from 'lucide-react'
 
 const Layout = ({ children }) => {
   const { signOut, user } = useAuth()
   const location = useLocation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
@@ -22,105 +23,51 @@ const Layout = ({ children }) => {
     setIsMobileMenuOpen(false)
   }
 
-  return (
-    <div className="min-h-screen bg-dad-white">
-      <nav className="bg-dad-dark shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link to="/dashboard" className="text-xl font-bold text-white">
-                Hey Dad
-              </Link>
-            </div>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-4">
-              <Link
-                to="/dashboard"
-                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                  isActive('/dashboard')
-                    ? 'bg-dad-olive text-white'
-                    : 'text-dad-blue-gray hover:text-white hover:bg-dad-olive'
-                }`}
-              >
-                <Home className="w-4 h-4 mr-2" />
-                Dashboard
-              </Link>
-              
-              <Link
-                to="/videos"
-                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                  isActive('/videos')
-                    ? 'bg-dad-olive text-white'
-                    : 'text-dad-blue-gray hover:text-white hover:bg-dad-olive'
-                }`}
-              >
-                <Video className="w-4 h-4 mr-2" />
-                Videos
-              </Link>
-              
-              <Link
-                to="/notifications"
-                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                  isActive('/notifications')
-                    ? 'bg-dad-olive text-white'
-                    : 'text-dad-blue-gray hover:text-white hover:bg-dad-olive'
-                }`}
-              >
-                <Bell className="w-4 h-4 mr-2" />
-                Notifications
-              </Link>
-              
-              <Link
-                to="/children"
-                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                  isActive('/children')
-                    ? 'bg-dad-olive text-white'
-                    : 'text-dad-blue-gray hover:text-white hover:bg-dad-olive'
-                }`}
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Children
-              </Link>
-              
-              <Link
-                to="/settings"
-                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                  isActive('/settings')
-                    ? 'bg-dad-olive text-white'
-                    : 'text-dad-blue-gray hover:text-white hover:bg-dad-olive'
-                }`}
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </Link>
-              
-              <Link
-                to="/about"
-                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                  isActive('/about')
-                    ? 'bg-dad-olive text-white'
-                    : 'text-dad-blue-gray hover:text-white hover:bg-dad-olive'
-                }`}
-              >
-                <Info className="w-4 h-4 mr-2" />
-                About
-              </Link>
-              
-              <button
-                onClick={handleSignOut}
-                className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-dad-blue-gray hover:text-white hover:bg-red-600"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </button>
-            </div>
+  const toggleNotifications = () => {
+    setIsNotificationsOpen(!isNotificationsOpen)
+  }
 
-            {/* Mobile menu button */}
-            <div className="md:hidden flex items-center">
+  const closeNotifications = () => {
+    setIsNotificationsOpen(false)
+  }
+
+  // Mock notifications data - replace with real data later
+  const notifications = [
+    {
+      id: 1,
+      title: "Video unlocked for Emma",
+      message: "Your message 'First Day of School' is now available",
+      time: "2 hours ago",
+      unread: true
+    },
+    {
+      id: 2,
+      title: "New child request",
+      message: "Emma sent you a question about college",
+      time: "1 day ago",
+      unread: true
+    },
+    {
+      id: 3,
+      title: "Backup completed",
+      message: "All your videos have been safely backed up",
+      time: "3 days ago",
+      unread: false
+    }
+  ]
+
+  const unreadCount = notifications.filter(n => n.unread).length
+
+  return (
+    <div className="min-h-screen bg-dad-warm">
+      <nav className="bg-gradient-warm shadow-legacy relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Left side - Mobile menu button */}
+            <div className="flex items-center">
               <button
                 onClick={toggleMobileMenu}
-                className="text-dad-blue-gray hover:text-white p-2"
+                className="md:hidden text-dad-blue-gray hover:text-dad-white p-2 rounded-lg transition-colors duration-300 mr-3"
                 aria-label="Toggle mobile menu"
               >
                 {isMobileMenuOpen ? (
@@ -130,107 +77,289 @@ const Layout = ({ children }) => {
                 )}
               </button>
             </div>
+
+            {/* Center - Hey Dad logo */}
+            <div className="flex-1 flex justify-center md:justify-start">
+              <Link to="/dashboard" className="text-2xl font-heading font-bold text-dad-white">
+                Hey Dad
+              </Link>
+            </div>
+            
+            {/* Desktop Navigation - Hidden on mobile */}
+            <div className="hidden md:flex items-center space-x-2 flex-1 justify-center">
+              <Link
+                to="/dashboard"
+                className={`flex items-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  isActive('/dashboard')
+                    ? 'bg-dad-white bg-opacity-20 text-dad-white shadow-soft'
+                    : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                }`}
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Dashboard
+              </Link>
+              
+              <Link
+                to="/videos"
+                className={`flex items-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  isActive('/videos')
+                    ? 'bg-dad-white bg-opacity-20 text-dad-white shadow-soft'
+                    : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                }`}
+              >
+                <Video className="w-4 h-4 mr-2" />
+                Videos
+              </Link>
+              
+              <Link
+                to="/children"
+                className={`flex items-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  isActive('/children')
+                    ? 'bg-dad-white bg-opacity-20 text-dad-white shadow-soft'
+                    : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                }`}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Children
+              </Link>
+              
+              <Link
+                to="/prompts"
+                className={`flex items-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  isActive('/prompts')
+                    ? 'bg-dad-white bg-opacity-20 text-dad-white shadow-soft'
+                    : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                }`}
+              >
+                <Lightbulb className="w-4 h-4 mr-2" />
+                Prompts
+              </Link>
+              
+              <Link
+                to="/settings"
+                className={`flex items-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  isActive('/settings')
+                    ? 'bg-dad-white bg-opacity-20 text-dad-white shadow-soft'
+                    : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                }`}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </Link>
+              
+              <Link
+                to="/about"
+                className={`flex items-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  isActive('/about')
+                    ? 'bg-dad-white bg-opacity-20 text-dad-white shadow-soft'
+                    : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                }`}
+              >
+                <Info className="w-4 h-4 mr-2" />
+                About
+              </Link>
+              
+              <button
+                onClick={handleSignOut}
+                className="flex items-center px-4 py-2 rounded-xl text-sm font-semibold text-dad-blue-gray hover:text-dad-white hover:bg-dad-accent hover:bg-opacity-80 transition-all duration-300 ml-2"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </button>
+            </div>
+
+            {/* Right side - Notifications */}
+            <div className="flex items-center">
+              <button
+                onClick={toggleNotifications}
+                className="relative p-2 text-dad-blue-gray hover:text-dad-white rounded-lg transition-colors duration-300"
+                aria-label="Notifications"
+              >
+                <Bell className="w-6 h-6" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-dad-accent text-dad-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Mobile Navigation Menu */}
           {isMobileMenuOpen && (
-            <div className="md:hidden">
-              <div className="px-2 pt-2 pb-3 space-y-1 bg-dad-dark border-t border-dad-olive">
-                <Link
-                  to="/dashboard"
-                  onClick={closeMobileMenu}
-                  className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${
-                    isActive('/dashboard')
-                      ? 'bg-dad-olive text-white'
-                      : 'text-dad-blue-gray hover:text-white hover:bg-dad-olive'
-                  }`}
-                >
-                  <Home className="w-5 h-5 mr-3" />
-                  Dashboard
-                </Link>
-                
-                <Link
-                  to="/videos"
-                  onClick={closeMobileMenu}
-                  className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${
-                    isActive('/videos')
-                      ? 'bg-dad-olive text-white'
-                      : 'text-dad-blue-gray hover:text-white hover:bg-dad-olive'
-                  }`}
-                >
-                  <Video className="w-5 h-5 mr-3" />
-                  Videos
-                </Link>
-                
-                <Link
-                  to="/notifications"
-                  onClick={closeMobileMenu}
-                  className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${
-                    isActive('/notifications')
-                      ? 'bg-dad-olive text-white'
-                      : 'text-dad-blue-gray hover:text-white hover:bg-dad-olive'
-                  }`}
-                >
-                  <Bell className="w-5 h-5 mr-3" />
-                  Notifications
-                </Link>
-                
-                <Link
-                  to="/children"
-                  onClick={closeMobileMenu}
-                  className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${
-                    isActive('/children')
-                      ? 'bg-dad-olive text-white'
-                      : 'text-dad-blue-gray hover:text-white hover:bg-dad-olive'
-                  }`}
-                >
-                  <Users className="w-5 h-5 mr-3" />
-                  Children
-                </Link>
-                
-                <Link
-                  to="/settings"
-                  onClick={closeMobileMenu}
-                  className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${
-                    isActive('/settings')
-                      ? 'bg-dad-olive text-white'
-                      : 'text-dad-blue-gray hover:text-white hover:bg-dad-olive'
-                  }`}
-                >
-                  <Settings className="w-5 h-5 mr-3" />
-                  Settings
-                </Link>
-                
-                <Link
-                  to="/about"
-                  onClick={closeMobileMenu}
-                  className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${
-                    isActive('/about')
-                      ? 'bg-dad-olive text-white'
-                      : 'text-dad-blue-gray hover:text-white hover:bg-dad-olive'
-                  }`}
-                >
-                  <Info className="w-5 h-5 mr-3" />
-                  About
-                </Link>
-                
-                <button
-                  onClick={() => {
-                    handleSignOut()
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center w-full px-3 py-2 rounded-md text-base font-medium text-dad-blue-gray hover:text-white hover:bg-red-600"
-                >
-                  <LogOut className="w-5 h-5 mr-3" />
-                  Sign Out
-                </button>
+            <div className="md:hidden absolute top-16 left-0 right-0 z-50">
+              <div className="mx-4 mt-2 bg-dad-dark bg-opacity-95 backdrop-blur-sm border border-dad-white border-opacity-20 rounded-xl shadow-strong">
+                <div className="px-4 py-3 space-y-1">
+                  <Link
+                    to="/dashboard"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold transition-all duration-300 ${
+                      isActive('/dashboard')
+                        ? 'bg-dad-white bg-opacity-20 text-dad-white'
+                        : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                    }`}
+                  >
+                    <Home className="w-5 h-5 mr-3" />
+                    Dashboard
+                  </Link>
+                  
+                  <Link
+                    to="/videos"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold transition-all duration-300 ${
+                      isActive('/videos')
+                        ? 'bg-dad-white bg-opacity-20 text-dad-white'
+                        : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                    }`}
+                  >
+                    <Video className="w-5 h-5 mr-3" />
+                    Videos
+                  </Link>
+                  
+                  <Link
+                    to="/children"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold transition-all duration-300 ${
+                      isActive('/children')
+                        ? 'bg-dad-white bg-opacity-20 text-dad-white'
+                        : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                    }`}
+                  >
+                    <Users className="w-5 h-5 mr-3" />
+                    Children
+                  </Link>
+                  
+                  <Link
+                    to="/prompts"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold transition-all duration-300 ${
+                      isActive('/prompts')
+                        ? 'bg-dad-white bg-opacity-20 text-dad-white'
+                        : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                    }`}
+                  >
+                    <Lightbulb className="w-5 h-5 mr-3" />
+                    Prompts
+                  </Link>
+                  
+                  <Link
+                    to="/settings"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold transition-all duration-300 ${
+                      isActive('/settings')
+                        ? 'bg-dad-white bg-opacity-20 text-dad-white'
+                        : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                    }`}
+                  >
+                    <Settings className="w-5 h-5 mr-3" />
+                    Settings
+                  </Link>
+                  
+                  <Link
+                    to="/about"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold transition-all duration-300 ${
+                      isActive('/about')
+                        ? 'bg-dad-white bg-opacity-20 text-dad-white'
+                        : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                    }`}
+                  >
+                    <Info className="w-5 h-5 mr-3" />
+                    About
+                  </Link>
+                  
+                  <button
+                    onClick={() => {
+                      handleSignOut()
+                      closeMobileMenu()
+                    }}
+                    className="flex items-center w-full px-4 py-3 rounded-xl text-base font-semibold text-dad-blue-gray hover:text-dad-white hover:bg-dad-accent hover:bg-opacity-80 transition-all duration-300"
+                  >
+                    <LogOut className="w-5 h-5 mr-3" />
+                    Sign Out
+                  </button>
+                </div>
               </div>
             </div>
           )}
         </div>
       </nav>
+
+      {/* Notifications Modal */}
+      {isNotificationsOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-25 backdrop-blur-sm"
+            onClick={closeNotifications}
+          ></div>
+          
+          {/* Modal */}
+          <div className="absolute top-16 right-4 w-96 max-w-[calc(100vw-2rem)]">
+            <div className="bg-dad-white rounded-2xl shadow-strong border border-dad-blue-gray">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-dad-blue-gray">
+                <h3 className="text-xl font-heading font-bold text-legacy">Notifications</h3>
+                <button
+                  onClick={closeNotifications}
+                  className="text-dad-olive hover:text-dad-dark transition-colors duration-300"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {/* Notifications List */}
+              <div className="max-h-96 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <Bell className="w-12 h-12 text-dad-olive mx-auto mb-4 opacity-50" />
+                    <p className="text-dad-olive font-medium">No notifications yet</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-dad-blue-gray">
+                    {notifications.map((notification) => (
+                      <div 
+                        key={notification.id} 
+                        className={`p-4 hover:bg-dad-warm transition-colors duration-300 ${
+                          notification.unread ? 'bg-dad-warm bg-opacity-50' : ''
+                        }`}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                            notification.unread ? 'bg-dad-accent' : 'bg-dad-blue-gray'
+                          }`}></div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-dad-dark text-sm">
+                              {notification.title}
+                            </h4>
+                            <p className="text-dad-olive text-sm mt-1">
+                              {notification.message}
+                            </p>
+                            <p className="text-dad-blue-gray text-xs mt-2">
+                              {notification.time}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Footer */}
+              {notifications.length > 0 && (
+                <div className="p-4 border-t border-dad-blue-gray">
+                  <button className="w-full text-center text-dad-olive hover:text-dad-dark font-medium text-sm transition-colors duration-300">
+                    Mark all as read
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
         {children}
       </main>
     </div>

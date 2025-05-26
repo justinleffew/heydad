@@ -5,5 +5,38 @@
 @layer base {
   body {
     font-family: 'Inter', system-ui, sans-serif;
+    background-color: #E8E6E3;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Merriweather', Georgia, serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  
+  .font-heading {
+    font-family: 'Merriweather', Georgia, serif;
+  }
+}
+
+@layer components {
+  .card-legacy {
+    @apply bg-dad-white border border-dad-blue-gray rounded-2xl shadow-soft hover:shadow-medium transition-all duration-300;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-warm text-dad-white font-semibold py-3 px-6 rounded-xl shadow-soft hover:shadow-medium transition-all duration-300 transform hover:-translate-y-0.5;
+  }
+  
+  .btn-secondary {
+    @apply bg-dad-warm text-dad-dark font-semibold py-3 px-6 rounded-xl border border-dad-blue-gray shadow-soft hover:shadow-medium transition-all duration-300;
+  }
+  
+  .text-legacy {
+    @apply text-dad-dark font-heading;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-dad-dark to-dad-olive bg-clip-text text-transparent;
   }
 } 
