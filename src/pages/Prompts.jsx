@@ -1,56 +1,62 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
-import { VIDEO_PROMPTS, getRandomPrompts } from '../data/prompts'
-import { Search, RefreshCw, Lightbulb, Video, ArrowRight } from 'lucide-react'
+import { VIDEO_PROMPTS, getAllCategories, getPromptsByCategory } from '../data/prompts'
+import { Search, Lightbulb, Video, ArrowRight, Heart, Briefcase, GraduationCap, Target, Users, Film, Star, BookOpen, Clock } from 'lucide-react'
 
 const Prompts = () => {
   const [searchTerm, setSearchTerm] = useState('')
-  const [displayedPrompts, setDisplayedPrompts] = useState(VIDEO_PROMPTS)
-  const [showRandomOnly, setShowRandomOnly] = useState(false)
-  const [randomPrompts, setRandomPrompts] = useState([])
+  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [displayedPrompts, setDisplayedPrompts] = useState([])
+  const [categories, setCategories] = useState([])
   const navigate = useNavigate()
 
-  useEffect(() => {
-    // Initialize with some random prompts
-    refreshRandomPrompts()
-  }, [])
-
-  const refreshRandomPrompts = () => {
-    const newRandomPrompts = getRandomPrompts(10)
-    setRandomPrompts(newRandomPrompts)
-    if (showRandomOnly) {
-      setDisplayedPrompts(newRandomPrompts)
-    }
+  const icons = {
+    Heart,
+    Briefcase,
+    GraduationCap,
+    Target,
+    Users,
+    Film,
+    Star,
+    BookOpen,
+    Lightbulb,
+    Clock
   }
+
+  useEffect(() => {
+    const allCategories = getAllCategories()
+    setCategories(allCategories)
+    setDisplayedPrompts(VIDEO_PROMPTS)
+  }, [])
 
   const handleSearch = (term) => {
     setSearchTerm(term)
     if (term.trim() === '') {
-      setDisplayedPrompts(showRandomOnly ? randomPrompts : VIDEO_PROMPTS)
+      setDisplayedPrompts(selectedCategory ? getPromptsByCategory(selectedCategory.id) : VIDEO_PROMPTS)
     } else {
-      const filtered = (showRandomOnly ? randomPrompts : VIDEO_PROMPTS).filter(prompt =>
+      const promptsToSearch = selectedCategory ? getPromptsByCategory(selectedCategory.id) : VIDEO_PROMPTS
+      const filtered = promptsToSearch.filter(prompt =>
         prompt.toLowerCase().includes(term.toLowerCase())
       )
       setDisplayedPrompts(filtered)
     }
   }
 
-  const toggleRandomMode = () => {
-    const newShowRandomOnly = !showRandomOnly
-    setShowRandomOnly(newShowRandomOnly)
-    
-    if (newShowRandomOnly) {
-      setDisplayedPrompts(randomPrompts)
-    } else {
-      setDisplayedPrompts(searchTerm ? VIDEO_PROMPTS.filter(prompt =>
-        prompt.toLowerCase().includes(searchTerm.toLowerCase())
-      ) : VIDEO_PROMPTS)
-    }
+  const selectCategory = (category) => {
+    setSelectedCategory(category)
+    const categoryPrompts = getPromptsByCategory(category.id)
+    setDisplayedPrompts(categoryPrompts)
+    setSearchTerm('')
+  }
+
+  const clearCategory = () => {
+    setSelectedCategory(null)
+    setDisplayedPrompts(VIDEO_PROMPTS)
+    setSearchTerm('')
   }
 
   const handleRecordWithPrompt = (prompt) => {
-    // Navigate to record page with the selected prompt
     navigate('/record', { state: { selectedPrompt: prompt } })
   }
 
@@ -81,35 +87,44 @@ const Prompts = () => {
             />
           </div>
 
-          {/* Toggle and Refresh Controls */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex items-center space-x-4">
+          {/* Category Selection */}
+          <div className="grid grid-cols-2 gap-3">
+            {selectedCategory ? (
               <button
-                onClick={toggleRandomMode}
-                className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                  showRandomOnly
-                    ? 'bg-dad-accent text-white shadow-soft'
-                    : 'bg-dad-warm text-dad-dark hover:bg-dad-blue-gray hover:bg-opacity-20'
-                }`}
+                onClick={clearCategory}
+                className="col-span-2 flex items-center justify-center px-4 py-3 bg-dad-accent text-white rounded-lg hover:bg-dad-dark transition-all duration-300"
               >
-                {showRandomOnly ? 'Show All Prompts' : 'Show Random Selection'}
+                <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+                Back to All Categories
               </button>
-
-              {showRandomOnly && (
+            ) : (
+              categories.map((category) => (
                 <button
-                  onClick={refreshRandomPrompts}
-                  className="flex items-center px-4 py-2 bg-dad-dark text-white rounded-lg hover:bg-dad-olive transition-all duration-300"
+                  key={category.id}
+                  onClick={() => selectCategory(category)}
+                  className="flex items-center px-4 py-3 bg-dad-warm hover:bg-dad-blue-gray hover:bg-opacity-20 rounded-lg transition-all duration-300 border border-transparent hover:border-dad-accent"
                 >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh Ideas
+                  <div className="flex items-center w-full">
+                    <div className="bg-dad-accent bg-opacity-20 p-2 rounded-lg mr-3 flex-shrink-0">
+                      {React.createElement(icons[category.icon], { className: "w-4 h-4 text-dad-accent" })}
+                    </div>
+                    <span className="text-dad-dark font-medium text-sm text-left">{category.name}</span>
+                  </div>
                 </button>
-              )}
-            </div>
-
-            <div className="text-dad-blue-gray">
-              Showing {displayedPrompts.length} of {VIDEO_PROMPTS.length} prompts
-            </div>
+              ))
+            )}
           </div>
+        </div>
+
+        {/* Section Header */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-dad-dark flex items-center">
+            <Lightbulb className="w-6 h-6 mr-2 text-dad-accent" />
+            Browse Video Ideas
+          </h2>
+          <p className="mt-1 text-dad-olive text-sm">
+            {selectedCategory ? `Showing ideas from ${selectedCategory.name}` : 'Showing all video ideas'}
+          </p>
         </div>
 
         {/* Prompts Grid */}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
-import { Video, Calendar, Clock, Users, Play, Lock, Unlock, Share } from 'lucide-react'
+import { Video, Calendar, Clock, Users, Play, Lock, Unlock, Share, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 const Videos = () => {
   const [videos, setVideos] = useState([])
@@ -152,6 +152,29 @@ const Videos = () => {
     }
   }
 
+  const getProcessingStatus = (video) => {
+    if (video.processing_status === 'completed') {
+      return {
+        icon: <CheckCircle2 className="w-4 h-4 text-green-600" />,
+        text: 'Processing complete',
+        color: 'text-green-600'
+      }
+    } else if (video.processing_status === 'processing') {
+      return {
+        icon: <Clock className="w-4 h-4 text-dad-olive animate-spin" />,
+        text: `Processing: ${video.processing_progress}%`,
+        color: 'text-dad-olive'
+      }
+    } else if (video.processing_status === 'failed') {
+      return {
+        icon: <AlertCircle className="w-4 h-4 text-red-600" />,
+        text: 'Processing failed',
+        color: 'text-red-600'
+      }
+    }
+    return null
+  }
+
   const handlePlayVideo = async (video) => {
     try {
       const { data, error } = await supabase.storage
@@ -211,6 +234,7 @@ const Videos = () => {
           <div className="space-y-6">
             {videos.map((video) => {
               const unlockStatus = getUnlockStatus(video)
+              const processingStatus = getProcessingStatus(video)
               
               return (
                 <div key={video.id} className="bg-white border border-dad-blue-gray rounded-lg p-6">
@@ -258,6 +282,13 @@ const Videos = () => {
                             {unlockStatus.description}
                           </span>
                         </div>
+
+                        {processingStatus && (
+                          <div className={`flex items-center space-x-2 mt-2 ${processingStatus.color}`}>
+                            {processingStatus.icon}
+                            <span className="text-xs">{processingStatus.text}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -327,8 +358,11 @@ const Videos = () => {
                         </span>
                       </div>
                       
-                      {unlockStatus.details && (
-                        <p className="text-xs text-dad-olive mt-1">{unlockStatus.details}</p>
+                      {processingStatus && (
+                        <div className={`flex items-center space-x-2 mt-2 ${processingStatus.color}`}>
+                          {processingStatus.icon}
+                          <span className="text-sm">{processingStatus.text}</span>
+                        </div>
                       )}
                     </div>
 

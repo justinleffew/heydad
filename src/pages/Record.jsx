@@ -3,8 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
-import { getRandomPrompts } from '../data/prompts'
-import { Video, Upload, Play, Square, ArrowLeft, Clock, Lightbulb, RefreshCw, X } from 'lucide-react'
+import { getRandomPrompts, getRandomPromptsFromCategory, getAllCategories } from '../data/prompts'
+import { Video, Upload, Play, Square, ArrowLeft, Clock, Lightbulb, RefreshCw, X, Heart, Briefcase, GraduationCap, Target, Users, Film, Star, BookOpen } from 'lucide-react'
 
 const Record = () => {
   const [isRecording, setIsRecording] = useState(false)
@@ -27,6 +27,12 @@ const Record = () => {
   const [currentPrompts, setCurrentPrompts] = useState([])
   const [selectedPrompt, setSelectedPrompt] = useState('')
   const [showPromptOverlay, setShowPromptOverlay] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [categories, setCategories] = useState([])
+
+  const [processingStatus, setProcessingStatus] = useState('pending')
+  const [processingProgress, setProcessingProgress] = useState(0)
+  const [processingError, setProcessingError] = useState('')
 
   const videoRef = useRef(null)
   const mediaRecorderRef = useRef(null)
@@ -38,8 +44,21 @@ const Record = () => {
   const navigate = useNavigate()
   const location = useLocation()
 
+  const icons = {
+    Heart,
+    Briefcase,
+    GraduationCap,
+    Target,
+    Users,
+    Film,
+    Star,
+    BookOpen,
+    Lightbulb
+  }
+
   useEffect(() => {
     fetchChildren()
+    setCategories(getAllCategories())
     
     // Check if a prompt was passed from the Prompts page
     if (location.state?.selectedPrompt) {
@@ -74,14 +93,21 @@ const Record = () => {
   }
 
   const openIdeasModal = () => {
-    const randomPrompts = getRandomPrompts(5)
-    setCurrentPrompts(randomPrompts)
+    setSelectedCategory(null)
     setShowIdeasModal(true)
   }
 
-  const refreshIdeas = () => {
-    const randomPrompts = getRandomPrompts(5)
+  const selectCategory = (category) => {
+    setSelectedCategory(category)
+    const randomPrompts = getRandomPromptsFromCategory(category.id)
     setCurrentPrompts(randomPrompts)
+  }
+
+  const refreshIdeas = () => {
+    if (selectedCategory) {
+      const randomPrompts = getRandomPromptsFromCategory(selectedCategory.id)
+      setCurrentPrompts(randomPrompts)
+    }
   }
 
   const selectPrompt = (prompt) => {
@@ -288,10 +314,14 @@ const Record = () => {
 
     setLoading(true)
     setError('')
+    setProcessingStatus('processing')
+    setProcessingProgress(0)
+    setProcessingError('')
 
     try {
       // Generate thumbnail
       const thumbnailBlob = await generateThumbnail(recordedBlob)
+      setProcessingProgress(20)
       
       // Upload video to Supabase Storage
       const fileName = `${user.id}/${Date.now()}.webm`
@@ -300,6 +330,7 @@ const Record = () => {
         .upload(fileName, recordedBlob)
 
       if (uploadError) throw uploadError
+      setProcessingProgress(40)
 
       // Upload thumbnail to Supabase Storage
       const thumbnailFileName = `${user.id}/${Date.now()}_thumb.jpg`
@@ -308,6 +339,7 @@ const Record = () => {
         .upload(thumbnailFileName, thumbnailBlob)
 
       if (thumbnailUploadError) throw thumbnailUploadError
+      setProcessingProgress(60)
 
       // Create video record
       const videoData = {
@@ -319,6 +351,8 @@ const Record = () => {
         unlock_age: unlockType === 'age' ? parseInt(unlockAge) : null,
         unlock_date: unlockType === 'date' ? unlockDate : null,
         unlock_milestone: unlockType === 'milestone' ? unlockMilestone.trim() : null,
+        processing_status: 'processing',
+        processing_progress: 80
       }
 
       const { data: video, error: videoError } = await supabase
@@ -328,6 +362,7 @@ const Record = () => {
         .single()
 
       if (videoError) throw videoError
+      setProcessingProgress(80)
 
       // Create video-children relationships
       const videoChildrenData = selectedChildren.map(childId => ({
@@ -340,10 +375,37 @@ const Record = () => {
         .insert(videoChildrenData)
 
       if (relationError) throw relationError
+      setProcessingProgress(90)
+
+      // Update video status to completed
+      const { error: updateError } = await supabase
+        .from('videos')
+        .update({ 
+          processing_status: 'completed',
+          processing_progress: 100
+        })
+        .eq('id', video.id)
+
+      if (updateError) throw updateError
+      setProcessingProgress(100)
+      setProcessingStatus('completed')
 
       navigate('/dashboard')
     } catch (error) {
       setError(error.message)
+      setProcessingError(error.message)
+      setProcessingStatus('failed')
+      
+      // Update video status to failed if we have a video ID
+      if (error.videoId) {
+        await supabase
+          .from('videos')
+          .update({ 
+            processing_status: 'failed',
+            processing_error: error.message
+          })
+          .eq('id', error.videoId)
+      }
     } finally {
       setLoading(false)
     }
@@ -551,16 +613,29 @@ const Record = () => {
                 <div className="flex items-center justify-between p-6 border-b border-dad-blue-gray">
                   <div className="flex items-center">
                     <Lightbulb className="w-6 h-6 text-dad-accent mr-3" />
-                    <h3 className="text-xl font-heading font-bold text-dad-dark">Video Ideas</h3>
+                    <h3 className="text-xl font-heading font-bold text-dad-dark">
+                      {selectedCategory ? selectedCategory.name : 'Video Ideas'}
+                    </h3>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button
-                      onClick={refreshIdeas}
-                      className="flex items-center px-3 py-2 bg-dad-accent text-white rounded-lg hover:bg-dad-dark transition-all duration-300"
-                    >
-                      <RefreshCw className="w-4 h-4 mr-1" />
-                      Refresh
-                    </button>
+                    {selectedCategory && (
+                      <>
+                        <button
+                          onClick={refreshIdeas}
+                          className="flex items-center px-3 py-2 bg-dad-accent text-white rounded-lg hover:bg-dad-dark transition-all duration-300"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-1" />
+                          Refresh
+                        </button>
+                        <button
+                          onClick={() => setSelectedCategory(null)}
+                          className="flex items-center px-3 py-2 text-dad-olive hover:text-dad-dark"
+                        >
+                          <ArrowLeft className="w-4 h-4 mr-1" />
+                          Back to Categories
+                        </button>
+                      </>
+                    )}
                     <button
                       onClick={() => setShowIdeasModal(false)}
                       className="text-dad-olive hover:text-dad-dark transition-colors duration-300"
@@ -570,29 +645,50 @@ const Record = () => {
                   </div>
                 </div>
                 
-                {/* Prompts List */}
+                {/* Content */}
                 <div className="max-h-96 overflow-y-auto p-6">
-                  <p className="text-dad-olive mb-4">Choose a prompt to inspire your recording:</p>
-                  <div className="space-y-3">
-                    {currentPrompts.map((prompt, index) => (
-                      <button
-                        key={index}
-                        onClick={() => selectPrompt(prompt)}
-                        className="w-full text-left p-4 bg-dad-warm hover:bg-dad-blue-gray hover:bg-opacity-20 rounded-lg transition-all duration-300 border border-transparent hover:border-dad-accent"
-                      >
-                        <p className="text-dad-dark leading-relaxed">{prompt}</p>
-                      </button>
-                    ))}
-                  </div>
-                  
-                  <div className="mt-6 pt-4 border-t border-dad-blue-gray">
-                    <button
-                      onClick={() => navigate('/prompts')}
-                      className="text-dad-accent hover:text-dad-dark font-medium"
-                    >
-                      View all prompts →
-                    </button>
-                  </div>
+                  {!selectedCategory ? (
+                    // Categories Grid
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {categories.map((category) => (
+                        <button
+                          key={category.id}
+                          onClick={() => selectCategory(category)}
+                          className="flex items-center p-4 bg-dad-warm hover:bg-dad-blue-gray hover:bg-opacity-20 rounded-lg transition-all duration-300 border border-transparent hover:border-dad-accent"
+                        >
+                          <div className="bg-dad-accent bg-opacity-20 p-3 rounded-lg mr-4">
+                            {React.createElement(icons[category.icon], { className: "w-6 h-6 text-dad-accent" })}
+                          </div>
+                          <span className="text-dad-dark font-medium">{category.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    // Prompts List
+                    <>
+                      <p className="text-dad-olive mb-4">Choose a prompt to inspire your recording:</p>
+                      <div className="space-y-3">
+                        {currentPrompts.map((prompt, index) => (
+                          <button
+                            key={index}
+                            onClick={() => selectPrompt(prompt)}
+                            className="w-full text-left p-4 bg-dad-warm hover:bg-dad-blue-gray hover:bg-opacity-20 rounded-lg transition-all duration-300 border border-transparent hover:border-dad-accent"
+                          >
+                            <p className="text-dad-dark leading-relaxed">{prompt}</p>
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <div className="mt-6 pt-4 border-t border-dad-blue-gray">
+                        <button
+                          onClick={() => navigate('/prompts')}
+                          className="text-dad-accent hover:text-dad-dark font-medium"
+                        >
+                          View all prompts →
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -621,6 +717,28 @@ const Record = () => {
         </div>
 
         <div className="max-w-2xl">
+          {processingStatus === 'processing' && (
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-dad-dark font-medium">Processing your video...</span>
+                <span className="text-dad-olive">{processingProgress}%</span>
+              </div>
+              <div className="w-full bg-dad-blue-gray bg-opacity-20 rounded-full h-2">
+                <div 
+                  className="bg-dad-dark h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${processingProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {processingStatus === 'failed' && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+              <p className="font-medium">Processing failed</p>
+              <p className="text-sm mt-1">{processingError}</p>
+            </div>
+          )}
+
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
               {error}

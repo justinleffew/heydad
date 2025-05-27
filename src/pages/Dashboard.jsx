@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
-import { Plus, Video, Calendar, Clock, Users, Share, Heart, Trophy, Timer, Camera, Badge } from 'lucide-react'
+import ReferralModal from '../components/ReferralModal'
+import { Plus, Video, Calendar, Clock, Users, Share, Heart, Trophy, Timer, Camera, Badge, Play, Lock, Unlock, AlertCircle, CheckCircle2, Gift } from 'lucide-react'
 
 const Dashboard = () => {
   const { user } = useAuth()
@@ -12,11 +13,14 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true)
   const [childImageUrls, setChildImageUrls] = useState({})
   const [thumbnailUrls, setThumbnailUrls] = useState({})
+  const [isReferralModalOpen, setIsReferralModalOpen] = useState(false)
+  const [referralStats, setReferralStats] = useState({ totalReferrals: 0, freeMonths: 0 })
 
   useEffect(() => {
     if (user) {
       fetchChildren()
       fetchVideos()
+      fetchReferralStats()
     }
   }, [user])
 
@@ -126,6 +130,32 @@ const Dashboard = () => {
     }
   }
 
+  const fetchReferralStats = async () => {
+    try {
+      // Get user's free months
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('free_months')
+        .eq('id', user.id)
+        .single()
+
+      // Get total referrals
+      const { data: referrals, error: referralError } = await supabase
+        .from('referrals')
+        .select('id')
+        .eq('referrer_id', user.id)
+
+      if (!profileError && !referralError) {
+        setReferralStats({
+          totalReferrals: referrals?.length || 0,
+          freeMonths: profile?.free_months || 0
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching referral stats:', error)
+    }
+  }
+
   const calculateAge = (birthdate) => {
     const today = new Date()
     const birth = new Date(birthdate)
@@ -176,6 +206,10 @@ const Dashboard = () => {
     const estimatedMinutesPerVideo = 2
     const totalMinutesRecorded = totalVideos * estimatedMinutesPerVideo
     
+    // Calculate AI Dad progress (10 hours = 600 minutes)
+    const totalMinutesRequired = 600
+    const aiDadProgress = Math.min((totalMinutesRecorded / totalMinutesRequired) * 100, 100)
+    
     // Get current month's videos
     const currentMonth = new Date().getMonth()
     const currentYear = new Date().getFullYear()
@@ -195,11 +229,36 @@ const Dashboard = () => {
       totalChildren,
       totalMinutesRecorded,
       currentMonthMinutes,
-      oldestChild
+      oldestChild,
+      aiDadProgress,
+      totalMinutesRequired
     }
   }
 
   const stats = getMotivationStats()
+
+  const getProcessingStatus = (video) => {
+    if (video.processing_status === 'completed') {
+      return {
+        icon: <CheckCircle2 className="w-4 h-4 text-green-600" />,
+        text: 'Processing complete',
+        color: 'text-green-600'
+      }
+    } else if (video.processing_status === 'processing') {
+      return {
+        icon: <Clock className="w-4 h-4 text-dad-olive animate-spin" />,
+        text: `Processing: ${video.processing_progress}%`,
+        color: 'text-dad-olive'
+      }
+    } else if (video.processing_status === 'failed') {
+      return {
+        icon: <AlertCircle className="w-4 h-4 text-red-600" />,
+        text: 'Processing failed',
+        color: 'text-red-600'
+      }
+    }
+    return null
+  }
 
   if (loading) {
     return (
@@ -219,15 +278,12 @@ const Dashboard = () => {
           <h1 className="text-4xl font-heading font-bold text-legacy mb-3 tracking-tight">
             Welcome back, Dad.
           </h1>
-          <p className="text-lg text-dad-olive font-medium">
-            Continue building your legacy for the next generation.
-          </p>
         </div>
 
         {/* Motivation/Stats Module - Enhanced */}
         <div className="mb-10">
           <div className="bg-gradient-warm rounded-2xl p-8 text-dad-white shadow-legacy">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
               {/* Memories Created */}
               <div className="text-center">
                 <div className="flex items-center justify-center mb-3">
@@ -255,9 +311,47 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <p className="text-sm opacity-90 font-medium">
-                  of video recorded this month
+                  of video recorded
                 </p>
               </div>
+
+              {/* Referral Stats */}
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-3">
+                  <div className="bg-dad-white bg-opacity-20 p-3 rounded-xl mr-3">
+                    <Gift className="w-8 h-8" />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-4xl font-heading font-bold">{referralStats.freeMonths}</span>
+                    <span className="text-sm opacity-90">free months</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsReferralModalOpen(true)}
+                  className="text-sm opacity-90 font-medium hover:opacity-100 transition-opacity"
+                >
+                  {referralStats.totalReferrals} referrals
+                </button>
+              </div>
+            </div>
+
+            {/* AI Dad Progress Bar */}
+            <div className="mt-8 max-w-2xl mx-auto">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium">AI Dad Progress</span>
+                <span className="text-sm font-medium">{stats.totalMinutesRecorded}/{stats.totalMinutesRequired} mins</span>
+              </div>
+              <div className="w-full bg-dad-white bg-opacity-20 rounded-full h-3">
+                <div 
+                  className="bg-dad-white h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${stats.aiDadProgress}%` }}
+                />
+              </div>
+              <p className="text-sm text-center mt-2 opacity-90">
+                {stats.aiDadProgress < 100 
+                  ? `${Math.round(stats.aiDadProgress)}% of the way to creating your AI Dad`
+                  : 'You have enough video content to create your AI Dad!'}
+              </p>
             </div>
 
             {/* Motivational Message - Enhanced */}
@@ -429,6 +523,14 @@ const Dashboard = () => {
                              video.unlock_type === 'milestone' ? 'Milestone' : 'Unlocked'}
                           </div>
                         </div>
+
+                        {/* Processing Status - Enhanced */}
+                        {getProcessingStatus(video) && (
+                          <div className={`flex items-center space-x-2 mt-2 ${getProcessingStatus(video).color}`}>
+                            {getProcessingStatus(video).icon}
+                            <span className="text-xs">{getProcessingStatus(video).text}</span>
+                          </div>
+                        )}
                       </div>
                       
                       {/* Content - Enhanced */}
@@ -503,6 +605,14 @@ const Dashboard = () => {
                            video.unlock_type === 'milestone' ? 'Milestone' : 'Unlocked'}
                         </div>
                       </div>
+
+                      {/* Processing Status - Enhanced */}
+                      {getProcessingStatus(video) && (
+                        <div className={`flex items-center space-x-2 mt-2 ${getProcessingStatus(video).color}`}>
+                          {getProcessingStatus(video).icon}
+                          <span className="text-sm">{getProcessingStatus(video).text}</span>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Content - Enhanced */}
@@ -567,6 +677,12 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Referral Modal */}
+      <ReferralModal
+        isOpen={isReferralModalOpen}
+        onClose={() => setIsReferralModalOpen(false)}
+      />
     </Layout>
   )
 }
