@@ -273,135 +273,141 @@ const Dashboard = () => {
   return (
     <Layout>
       <div className="px-4 sm:px-0">
-        {/* Hero Section - Enhanced */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-heading font-bold text-legacy mb-3 tracking-tight">
-            Welcome back, Dad.
-          </h1>
-        </div>
-
-        {/* Motivation/Stats Module - Enhanced */}
-        <div className="mb-10">
-          <div className="bg-gradient-warm rounded-2xl p-8 text-dad-white shadow-legacy">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
-              {/* Memories Created */}
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-3">
-                  <div className="bg-dad-white bg-opacity-20 p-3 rounded-xl mr-3">
-                    <Heart className="w-8 h-8" />
-                  </div>
-                  <span className="text-4xl font-heading font-bold">{stats.totalVideos}</span>
-                </div>
-                <p className="text-sm opacity-90 font-medium">
-                  {stats.totalVideos === 1 ? 'memory created' : 'memories created'}
-                  {stats.oldestChild && ` for ${stats.oldestChild.name}`}
-                  {stats.totalChildren > 1 && ' and others'}
-                </p>
-              </div>
-
-              {/* Recording Time */}
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-3">
-                  <div className="bg-dad-white bg-opacity-20 p-3 rounded-xl mr-3">
-                    <Timer className="w-8 h-8" />
-                  </div>
-                  <div className="flex items-baseline">
-                    <span className="text-4xl font-heading font-bold">{stats.currentMonthMinutes}</span>
-                    <span className="text-lg ml-1 font-medium">mins</span>
-                  </div>
-                </div>
-                <p className="text-sm opacity-90 font-medium">
-                  of video recorded
-                </p>
-              </div>
-
-              {/* Referral Stats */}
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-3">
-                  <div className="bg-dad-white bg-opacity-20 p-3 rounded-xl mr-3">
-                    <Gift className="w-8 h-8" />
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-4xl font-heading font-bold">{referralStats.freeMonths}</span>
-                    <span className="text-sm opacity-90">free months</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsReferralModalOpen(true)}
-                  className="text-sm opacity-90 font-medium hover:opacity-100 transition-opacity"
-                >
-                  {referralStats.totalReferrals} referrals
-                </button>
-              </div>
-            </div>
-
-            {/* AI Dad Progress Bar */}
-            <div className="mt-8 max-w-2xl mx-auto">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">AI Dad Progress</span>
-                <span className="text-sm font-medium">{stats.totalMinutesRecorded}/{stats.totalMinutesRequired} mins</span>
-              </div>
-              <div className="w-full bg-dad-white bg-opacity-20 rounded-full h-3">
-                <div 
-                  className="bg-dad-white h-3 rounded-full transition-all duration-300"
-                  style={{ width: `${stats.aiDadProgress}%` }}
-                />
-              </div>
-              <p className="text-sm text-center mt-2 opacity-90">
-                {stats.aiDadProgress < 100 
-                  ? `${Math.round(stats.aiDadProgress)}% of the way to creating your AI Dad`
-                  : 'You have enough video content to create your AI Dad!'}
-              </p>
-            </div>
-
-            {/* Motivational Message - Enhanced */}
-            <div className="mt-8 text-center border-t border-dad-white border-opacity-20 pt-6">
-              <div className="bg-dad-white bg-opacity-10 rounded-xl p-4 backdrop-blur-sm">
-                {stats.totalVideos === 0 ? (
-                  <p className="text-lg font-heading font-medium">
-                    🔥 Time to get to work. Your kids need to hear from their old man.
-                  </p>
-                ) : stats.totalVideos < 5 ? (
-                  <p className="text-lg font-heading font-medium">
-                    💪 Solid start, brother. Keep laying that foundation.
-                  </p>
-                ) : stats.totalVideos < 10 ? (
-                  <p className="text-lg font-heading font-medium">
-                    🛠️ You're building something that'll outlast us all. Stay on it.
-                  </p>
-                ) : (
-                  <p className="text-lg font-heading font-medium">
-                    🏆 Damn right. You're setting the standard for what a father should be.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Quick Actions - Enhanced */}
         <div className="mb-10">
           <div className="grid grid-cols-1 gap-6">
             <Link
               to="/record"
-              className="group bg-gradient-warm text-dad-white p-8 rounded-2xl shadow-legacy hover:shadow-strong transition-all duration-300 transform hover:-translate-y-1"
+              className="group bg-white text-dad-dark p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-dad-olive"
             >
               <div className="flex items-center">
-                <div className="bg-dad-white bg-opacity-20 p-4 rounded-xl mr-6 group-hover:bg-opacity-30 transition-all duration-300">
-                  <Video className="w-10 h-10" />
+                <div className="bg-dad-olive bg-opacity-10 p-4 rounded-xl mr-6 group-hover:bg-opacity-20 transition-all duration-300">
+                  <Video className="w-10 h-10 text-dad-olive" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-heading font-bold mb-2">Record Legacy</h3>
-                  <p className="text-dad-blue-gray opacity-90 font-medium">Create a new video message for your children</p>
+                  <h3 className="text-3xl font-heading font-bold mb-2">Create a new memory</h3>
+                  <p className="text-dad-olive font-medium">Record a video message your children will cherish forever</p>
                 </div>
               </div>
             </Link>
           </div>
         </div>
 
+        {/* Motivation/Stats Module - Enhanced */}
+        <div className="mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {/* Memories Card - Featured */}
+            <div className="bg-dad-dark rounded-2xl p-4 text-white shadow-lg relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-baseline">
+                    <span className="text-4xl font-heading font-bold">{stats.totalVideos}</span>
+                    <span className="text-xl ml-3 font-medium text-white text-opacity-90">memories created</span>
+                  </div>
+                </div>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  <div className="bg-white bg-opacity-20 w-14 h-14 rounded-lg flex items-center justify-center">
+                    <Heart className="w-10 h-10" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Minutes Card */}
+            <div className="bg-dad-dark rounded-2xl p-4 text-white shadow-lg relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-baseline">
+                    <span className="text-4xl font-heading font-bold">{stats.currentMonthMinutes}</span>
+                    <span className="text-xl ml-3 font-medium text-white text-opacity-90">mins</span>
+                  </div>
+                  <p className="text-sm text-white text-opacity-90 font-medium mt-1">
+                    of video recorded this month
+                  </p>
+                </div>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  <div className="bg-white bg-opacity-20 w-14 h-14 rounded-lg flex items-center justify-center">
+                    <Timer className="w-10 h-10" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Referrals Card */}
+            <div className="bg-dad-dark rounded-2xl p-4 text-white shadow-lg relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-baseline">
+                    <span className="text-4xl font-heading font-bold">{referralStats.freeMonths}</span>
+                    <span className="text-xl ml-3 font-medium text-white text-opacity-90">free months</span>
+                  </div>
+                  <p className="text-sm text-white text-opacity-90 font-medium mt-1">
+                    {referralStats.totalReferrals} referrals
+                  </p>
+                </div>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  <div className="bg-white bg-opacity-20 w-14 h-14 rounded-lg flex items-center justify-center">
+                    <Gift className="w-10 h-10" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Dad Progress Bar */}
+          <div className="mt-8 max-w-2xl mx-auto">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-lg font-heading font-bold">AI Dad: {Math.round(stats.aiDadProgress)}% complete</span>
+              <span className="text-sm font-medium text-dad-olive">{stats.totalMinutesRecorded}/{stats.totalMinutesRequired} mins</span>
+            </div>
+            <div className="w-full bg-dad-white bg-opacity-20 rounded-full h-4">
+              <div 
+                className="bg-gradient-to-r from-dad-olive to-dad-gold h-4 rounded-full transition-all duration-300"
+                style={{ width: `${stats.aiDadProgress}%` }}
+              />
+            </div>
+            <p className="text-base text-center mt-3 font-medium">
+              You're building something only a few ever will. {stats.totalMinutesRequired - stats.totalMinutesRecorded} minutes to go.
+            </p>
+          </div>
+        </div>
+
+        {/* Hero Section - Moved */}
+        <div className="relative mb-12">
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{
+              backgroundImage: 'url("/images/dadson.png")',
+              filter: 'grayscale(100%)',
+              opacity: '0.4',
+              height: '180px'
+            }}
+          >
+            <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+          </div>
+          <div className="relative pt-4 pb-2 px-4 sm:px-6 lg:px-8">
+            <h1 className="text-2xl sm:text-3xl font-heading font-bold text-white mb-1 tracking-tight max-w-3xl">
+              They may forget the little things. But they'll have this forever.
+            </h1>
+            <p className="text-sm sm:text-base text-white text-opacity-90 max-w-2xl">
+              {children.length === 0 
+                ? "You're about to start building a legacy your kids will cherish. Let's begin."
+                : children.length === 1
+                ? `You've started building a legacy ${children[0].name} will cherish. Let's keep going.`
+                : children.length === 2
+                ? `You've started building a legacy ${children[0].name} & ${children[1].name} will cherish. Let's keep going.`
+                : `You've started building a legacy ${children.slice(0, -2).map(child => child.name).join(', ')}, ${children[children.length - 2].name} & ${children[children.length - 1].name} will cherish. Let's keep going.`
+              }
+            </p>
+          </div>
+        </div>
+
         {/* Children Cards - Enhanced */}
         <div className="mb-10">
-          <h2 className="text-3xl font-heading font-bold text-legacy mb-6">Your Children</h2>
+          <h2 className="text-3xl font-heading font-bold text-legacy mb-2">Your Children</h2>
+          <p className="text-dad-olive font-medium italic mb-6">
+            This is who you're doing it for
+          </p>
           {children.length === 0 ? (
             <div className="card-legacy p-10 text-center">
               <div className="bg-dad-olive bg-opacity-10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
@@ -426,7 +432,8 @@ const Dashboard = () => {
                       <img
                         src={childImageUrls[child.id]}
                         alt={child.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        style={{ objectPosition: '50% 30%' }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -460,7 +467,8 @@ const Dashboard = () => {
                           {videos.filter(v => v.video_children?.some(vc => vc.children.id === child.id)).length} videos
                         </span>
                       </div>
-                      <div className="text-dad-olive font-medium">
+                      <div className="flex items-center text-dad-olive font-medium">
+                        <Lock className="w-4 h-4 mr-1" />
                         Next unlock: Age 18
                       </div>
                     </div>
@@ -498,50 +506,40 @@ const Dashboard = () => {
                   {/* Mobile Layout (stacked) - Enhanced */}
                   <div className="block md:hidden">
                     <div className="relative">
-                      {/* Video Thumbnail - Enhanced */}
-                      <div className="w-full h-56 relative overflow-hidden">
-                        {thumbnailUrls[video.id] ? (
-                          <img
-                            src={thumbnailUrls[video.id]}
-                            alt={video.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-subtle flex items-center justify-center">
-                            <div className="bg-dad-white bg-opacity-80 p-4 rounded-2xl shadow-soft">
-                              <Video className="w-12 h-12 text-dad-olive" />
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Unlock Badge - Enhanced */}
-                        <div className="absolute top-4 right-4">
-                          <div className="bg-dad-accent text-dad-white px-4 py-2 rounded-xl font-heading font-bold text-sm shadow-medium flex items-center">
-                            <Badge className="w-4 h-4 mr-2" />
-                            {video.unlock_type === 'age' ? `Age ${video.unlock_age}` : 
-                             video.unlock_type === 'date' ? new Date(video.unlock_date).toLocaleDateString() :
-                             video.unlock_type === 'milestone' ? 'Milestone' : 'Unlocked'}
-                          </div>
-                        </div>
-
-                        {/* Processing Status - Enhanced */}
-                        {getProcessingStatus(video) && (
-                          <div className={`flex items-center space-x-2 mt-2 ${getProcessingStatus(video).color}`}>
-                            {getProcessingStatus(video).icon}
-                            <span className="text-xs">{getProcessingStatus(video).text}</span>
-                          </div>
-                        )}
-                      </div>
-                      
                       {/* Content - Enhanced */}
                       <div className="p-6">
-                        <h3 className="text-xl font-heading font-bold text-legacy mb-3">{video.title}</h3>
-                        
                         {/* Transcript Snippet - Enhanced */}
                         <div className="bg-dad-warm border-l-4 border-dad-gold p-4 rounded-r-xl mb-4 shadow-inner-soft">
-                          <p className="text-dad-dark italic font-medium leading-relaxed">
+                          <p className="text-dad-dark italic font-medium text-lg leading-relaxed">
                             "{getTranscriptSnippet(video)}"
                           </p>
+                        </div>
+
+                        {/* Video Thumbnail - Enhanced */}
+                        <div className="w-full h-40 relative overflow-hidden rounded-xl mb-4">
+                          {thumbnailUrls[video.id] ? (
+                            <img
+                              src={thumbnailUrls[video.id]}
+                              alt={video.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-subtle flex items-center justify-center">
+                              <div className="bg-dad-white bg-opacity-80 p-4 rounded-2xl shadow-soft">
+                                <Video className="w-10 h-10 text-dad-olive" />
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Unlock Badge - Enhanced */}
+                          <div className="absolute top-2 right-2">
+                            <div className="bg-dad-accent text-dad-white px-3 py-1 rounded-lg font-heading font-bold text-xs shadow-medium flex items-center">
+                              <Badge className="w-3 h-3 mr-1" />
+                              {video.unlock_type === 'age' ? `Age ${video.unlock_age}` : 
+                               video.unlock_type === 'date' ? new Date(video.unlock_date).toLocaleDateString() :
+                               video.unlock_type === 'milestone' ? 'Milestone' : 'Unlocked'}
+                            </div>
+                          </div>
                         </div>
                         
                         <div className="flex flex-col text-sm text-dad-olive space-y-2 mb-4">
@@ -554,24 +552,23 @@ const Dashboard = () => {
                             For: {video.video_children?.map(vc => vc.children.name).join(', ') || 'No children assigned'}
                           </span>
                         </div>
-                        
+
                         {/* Action Buttons - Enhanced */}
-                        <div className="flex gap-3">
+                        <div className="flex gap-2">
                           <Link
                             to="/videos"
-                            className="flex-1 btn-primary text-center"
+                            className="flex-1 flex items-center justify-center px-4 py-2 bg-dad-dark text-white rounded-lg hover:bg-dad-olive transition-colors duration-300"
                           >
-                            <Video className="w-4 h-4 mr-2 inline" />
-                            View Details
+                            <Play className="w-4 h-4 mr-2" />
+                            Watch Again
                           </Link>
                           
                           <button
                             disabled
-                            className="flex-1 btn-secondary opacity-50 cursor-not-allowed text-center"
+                            className="p-2 text-dad-olive hover:text-dad-dark transition-colors duration-300"
                             title="Coming soon - Share with Mom"
                           >
-                            <Share className="w-4 h-4 mr-2 inline" />
-                            Share with Mom
+                            <Share className="w-5 h-5" />
                           </button>
                         </div>
                       </div>
@@ -580,8 +577,50 @@ const Dashboard = () => {
 
                   {/* Desktop Layout (horizontal) - Enhanced */}
                   <div className="hidden md:flex">
+                    {/* Content - Enhanced */}
+                    <div className="flex-1 p-8">
+                      {/* Transcript Snippet - Enhanced */}
+                      <div className="bg-dad-warm border-l-4 border-dad-gold p-6 rounded-r-xl mb-6 shadow-inner-soft">
+                        <p className="text-dad-dark italic font-medium text-xl leading-relaxed">
+                          "{getTranscriptSnippet(video)}"
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center text-sm text-dad-olive space-x-6">
+                          <span className="flex items-center font-medium">
+                            <Calendar className="w-4 h-4 mr-2" />
+                            {new Date(video.created_at).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center font-medium">
+                            <Users className="w-4 h-4 mr-2" />
+                            For: {video.video_children?.map(vc => vc.children.name).join(', ') || 'No children assigned'}
+                          </span>
+                        </div>
+
+                        {/* Action Buttons - Enhanced */}
+                        <div className="flex items-center space-x-3">
+                          <Link
+                            to="/videos"
+                            className="flex items-center px-4 py-2 bg-dad-dark text-white rounded-lg hover:bg-dad-olive transition-colors duration-300"
+                          >
+                            <Play className="w-4 h-4 mr-2" />
+                            Watch Again
+                          </Link>
+                          
+                          <button
+                            disabled
+                            className="p-2 text-dad-olive hover:text-dad-dark transition-colors duration-300"
+                            title="Coming soon - Share with Mom"
+                          >
+                            <Share className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Video Thumbnail - Enhanced */}
-                    <div className="flex-shrink-0 relative w-80 h-48 overflow-hidden">
+                    <div className="flex-shrink-0 relative w-48 h-32 overflow-hidden">
                       {thumbnailUrls[video.id] ? (
                         <img
                           src={thumbnailUrls[video.id]}
@@ -591,72 +630,19 @@ const Dashboard = () => {
                       ) : (
                         <div className="w-full h-full bg-gradient-subtle flex items-center justify-center">
                           <div className="bg-dad-white bg-opacity-80 p-4 rounded-2xl shadow-soft">
-                            <Video className="w-10 h-10 text-dad-olive" />
+                            <Video className="w-8 h-8 text-dad-olive" />
                           </div>
                         </div>
                       )}
                       
                       {/* Unlock Badge - Enhanced */}
-                      <div className="absolute top-4 right-4">
-                        <div className="bg-dad-accent text-dad-white px-4 py-2 rounded-xl font-heading font-bold text-sm shadow-medium flex items-center">
-                          <Badge className="w-4 h-4 mr-2" />
+                      <div className="absolute top-2 right-2">
+                        <div className="bg-dad-accent text-dad-white px-3 py-1 rounded-lg font-heading font-bold text-xs shadow-medium flex items-center">
+                          <Badge className="w-3 h-3 mr-1" />
                           {video.unlock_type === 'age' ? `Age ${video.unlock_age}` : 
                            video.unlock_type === 'date' ? new Date(video.unlock_date).toLocaleDateString() :
                            video.unlock_type === 'milestone' ? 'Milestone' : 'Unlocked'}
                         </div>
-                      </div>
-
-                      {/* Processing Status - Enhanced */}
-                      {getProcessingStatus(video) && (
-                        <div className={`flex items-center space-x-2 mt-2 ${getProcessingStatus(video).color}`}>
-                          {getProcessingStatus(video).icon}
-                          <span className="text-sm">{getProcessingStatus(video).text}</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Content - Enhanced */}
-                    <div className="flex-1 p-8">
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-2xl font-heading font-bold text-legacy">{video.title}</h3>
-                        
-                        {/* Action Buttons - Enhanced */}
-                        <div className="flex space-x-3">
-                          <Link
-                            to="/videos"
-                            className="btn-primary"
-                          >
-                            <Video className="w-4 h-4 mr-2" />
-                            View Details
-                          </Link>
-                          
-                          <button
-                            disabled
-                            className="btn-secondary opacity-50 cursor-not-allowed"
-                            title="Coming soon - Share with Mom"
-                          >
-                            <Share className="w-4 h-4 mr-2" />
-                            Share with Mom
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {/* Transcript Snippet - Enhanced */}
-                      <div className="bg-dad-warm border-l-4 border-dad-gold p-4 rounded-r-xl mb-6 shadow-inner-soft">
-                        <p className="text-dad-dark italic font-medium leading-relaxed">
-                          "{getTranscriptSnippet(video)}"
-                        </p>
-                      </div>
-                      
-                      <div className="flex items-center text-dad-olive space-x-6">
-                        <span className="flex items-center font-medium">
-                          <Calendar className="w-5 h-5 mr-2" />
-                          {new Date(video.created_at).toLocaleDateString()}
-                        </span>
-                        <span className="flex items-center font-medium">
-                          <Users className="w-5 h-5 mr-2" />
-                          For: {video.video_children?.map(vc => vc.children.name).join(', ') || 'No children assigned'}
-                        </span>
                       </div>
                     </div>
                   </div>

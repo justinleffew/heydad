@@ -35,7 +35,7 @@ const Layout = ({ children }) => {
   const notifications = [
     {
       id: 1,
-      title: "Video unlocked for Emma",
+      title: "Video unlocked for Easton",
       message: "Your message 'First Day of School' is now available",
       time: "2 hours ago",
       unread: true
@@ -43,7 +43,7 @@ const Layout = ({ children }) => {
     {
       id: 2,
       title: "New child request",
-      message: "Emma sent you a question about college",
+      message: "Walker sent you a question about college",
       time: "1 day ago",
       unread: true
     },

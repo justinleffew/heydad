@@ -276,7 +276,12 @@ export const getPromptsByCategory = (categoryId) => {
 
 // Function to get random prompts from a specific category
 export const getRandomPromptsFromCategory = (categoryId, count = 5) => {
-  const prompts = getPromptsByCategory(categoryId)
+  const category = PROMPT_CATEGORIES[categoryId]
+  if (!category) {
+    console.warn(`Category ${categoryId} not found, returning random prompts instead`)
+    return getRandomPrompts(count)
+  }
+  const prompts = category.prompts
   const shuffled = [...prompts].sort(() => 0.5 - Math.random())
   return shuffled.slice(0, count)
 }

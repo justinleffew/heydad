@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
-import { Users, Plus, Upload, X, Calendar, Edit, Trash2, User } from 'lucide-react'
+import { Users, Plus, Upload, X, Calendar, Edit, Trash2, User, Lock, Heart } from 'lucide-react'
 
 const Children = () => {
   const [children, setChildren] = useState([])
@@ -97,12 +97,30 @@ const Children = () => {
     return age
   }
 
+  const getNextUnlockDate = (birthdate) => {
+    const today = new Date()
+    const birth = new Date(birthdate)
+    const nextBirthday = new Date(today.getFullYear(), birth.getMonth(), birth.getDate())
+    
+    if (nextBirthday < today) {
+      nextBirthday.setFullYear(today.getFullYear() + 1)
+    }
+    
+    return nextBirthday
+  }
+
+  const getAgeDescription = (age) => {
+    if (age < 1) return 'Less than a year old'
+    if (age === 1) return '1 year old'
+    return `${age} years old`
+  }
+
   const handleImageUpload = (event) => {
     const file = event.target.files[0]
     if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Image size must be less than 5MB')
+      // Check file size (max 20MB)
+      if (file.size > 20 * 1024 * 1024) {
+        setError('Image size must be less than 20MB')
         return
       }
 
@@ -249,9 +267,9 @@ const Children = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-dad-dark">Children</h1>
+              <h1 className="text-3xl font-bold text-dad-dark">Your Children</h1>
               <p className="mt-2 text-dad-olive">
-                Manage your children and create legacy videos for them.
+                Create lasting memories and legacy videos for the ones you love most.
               </p>
             </div>
             <button
@@ -332,7 +350,8 @@ const Children = () => {
                       <img
                         src={formData.imagePreview}
                         alt="Preview"
-                        className="w-24 h-24 object-cover rounded-lg border border-dad-blue-gray"
+                        className="w-24 h-24 object-cover object-center rounded-lg border border-dad-blue-gray"
+                        style={{ objectPosition: '50% 30%' }}
                       />
                       <button
                         type="button"
@@ -407,31 +426,32 @@ const Children = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {children.map((child) => (
-              <div key={child.id} className="bg-white border border-dad-blue-gray rounded-lg p-6">
+              <div key={child.id} className="bg-white border border-dad-blue-gray rounded-lg p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     {child.image_path && childImageUrls[child.id] ? (
                       <img
                         src={childImageUrls[child.id]}
                         alt={child.name}
-                        className="w-12 h-12 object-cover rounded-full border border-dad-blue-gray"
+                        className="w-16 h-16 object-cover object-center rounded-full border-2 border-dad-olive"
+                        style={{ objectPosition: '50% 30%' }}
                         onError={(e) => {
-                          // If image fails to load, hide it and show default avatar
                           e.target.style.display = 'none'
                           e.target.nextSibling.style.display = 'flex'
                         }}
                       />
                     ) : null}
                     {(!child.image_path || !childImageUrls[child.id]) && (
-                      <div className="w-12 h-12 bg-dad-blue-gray bg-opacity-20 rounded-full flex items-center justify-center">
-                        <User className="w-6 h-6 text-dad-blue-gray" />
+                      <div className="w-16 h-16 bg-dad-blue-gray bg-opacity-20 rounded-full flex items-center justify-center border-2 border-dad-olive">
+                        <User className="w-8 h-8 text-dad-blue-gray" />
                       </div>
                     )}
                     <div>
-                      <h3 className="text-lg font-semibold text-dad-dark">{child.name}</h3>
-                      <p className="text-sm text-dad-olive">
-                        Age {calculateAge(child.birthdate)}
-                      </p>
+                      <h3 className="text-xl font-semibold text-dad-dark">{child.name}</h3>
+                      <div className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-dad-olive bg-opacity-10 text-dad-olive">
+                        <Heart className="w-3 h-3 mr-1" />
+                        {getAgeDescription(calculateAge(child.birthdate))}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -458,8 +478,8 @@ const Children = () => {
                     Born: {new Date(child.birthdate).toLocaleDateString()}
                   </div>
                   <div className="flex items-center">
-                    <Users className="w-4 h-4 mr-2" />
-                    Added: {new Date(child.created_at).toLocaleDateString()}
+                    <Lock className="w-4 h-4 mr-2" />
+                    Next video unlocks: {getNextUnlockDate(child.birthdate).toLocaleDateString()}
                   </div>
                 </div>
 

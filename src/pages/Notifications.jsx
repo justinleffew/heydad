@@ -44,7 +44,7 @@ const Notifications = () => {
         {
           id: 1,
           type: 'question',
-          child_name: 'Emma',
+          child_name: 'Easton',
           child_id: 1,
           message: "Dad, I'm nervous about my first day at high school tomorrow. Do you have any advice for me?",
           created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
@@ -54,7 +54,7 @@ const Notifications = () => {
         {
           id: 2,
           type: 'request',
-          child_name: 'Alex',
+          child_name: 'Walker',
           child_id: 2,
           message: "Can you record a video about how to handle bullies? Some kids at school are being mean.",
           created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
@@ -64,7 +64,7 @@ const Notifications = () => {
         {
           id: 3,
           type: 'milestone',
-          child_name: 'Emma',
+          child_name: 'Easton',
           child_id: 1,
           message: "I got accepted to college! Can you unlock the graduation video you made for me?",
           created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
@@ -74,7 +74,7 @@ const Notifications = () => {
         {
           id: 4,
           type: 'question',
-          child_name: 'Alex',
+          child_name: 'Walker',
           child_id: 2,
           message: "Dad, what was your biggest mistake when you were my age? I feel like I messed up really bad.",
           created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago

@@ -3,8 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
-import { getRandomPrompts, getRandomPromptsFromCategory, getAllCategories } from '../data/prompts'
-import { Video, Upload, Play, Square, ArrowLeft, Clock, Lightbulb, RefreshCw, X, Heart, Briefcase, GraduationCap, Target, Users, Film, Star, BookOpen } from 'lucide-react'
+import { VIDEO_PROMPTS, PROMPT_CATEGORIES, getRandomPrompts, getRandomPromptsFromCategory, getAllCategories } from '../data/prompts'
+import { Video, Upload, Play, Square, ArrowLeft, Clock, Lightbulb, RefreshCw, X, Heart, Briefcase, GraduationCap, Target, Users, Film, Star, BookOpen, Search, ArrowRight } from 'lucide-react'
 
 const Record = () => {
   const [isRecording, setIsRecording] = useState(false)
@@ -29,6 +29,7 @@ const Record = () => {
   const [showPromptOverlay, setShowPromptOverlay] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [categories, setCategories] = useState([])
+  const [searchTerm, setSearchTerm] = useState('')
 
   const [processingStatus, setProcessingStatus] = useState('pending')
   const [processingProgress, setProcessingProgress] = useState(0)
@@ -57,8 +58,13 @@ const Record = () => {
   }
 
   useEffect(() => {
+    console.log('Record component mounted')
     fetchChildren()
-    setCategories(getAllCategories())
+    
+    // Load categories immediately
+    const allCategories = getAllCategories()
+    console.log('Loaded categories:', allCategories)
+    setCategories(allCategories)
     
     // Check if a prompt was passed from the Prompts page
     if (location.state?.selectedPrompt) {
@@ -92,21 +98,64 @@ const Record = () => {
     }
   }
 
+  const handleSearch = (term) => {
+    setSearchTerm(term)
+    if (term.trim() === '') {
+      setCurrentPrompts(selectedCategory ? selectedCategory.prompts : VIDEO_PROMPTS)
+    } else {
+      const promptsToSearch = selectedCategory ? selectedCategory.prompts : VIDEO_PROMPTS
+      const filtered = promptsToSearch.filter(prompt =>
+        prompt.toLowerCase().includes(term.toLowerCase())
+      )
+      setCurrentPrompts(filtered)
+    }
+  }
+
   const openIdeasModal = () => {
-    setSelectedCategory(null)
-    setShowIdeasModal(true)
+    try {
+      // Reset state
+      setSelectedCategory(null)
+      setSearchTerm('')
+      setCurrentPrompts([])
+      setError('')
+      
+      // Load categories
+      const allCategories = getAllCategories()
+      setCategories(allCategories)
+      
+      // Show modal
+      setShowIdeasModal(true)
+    } catch (error) {
+      console.error('Error opening ideas modal:', error)
+      setError('Failed to open ideas modal. Please try again.')
+    }
   }
 
   const selectCategory = (category) => {
-    setSelectedCategory(category)
-    const randomPrompts = getRandomPromptsFromCategory(category.id)
-    setCurrentPrompts(randomPrompts)
+    try {
+      setSelectedCategory(category)
+      const categoryPrompts = getPromptsByCategory(category.id)
+      setCurrentPrompts(categoryPrompts)
+    } catch (error) {
+      console.error('Error selecting category:', error)
+      setError('Failed to load category prompts. Please try again.')
+    }
   }
 
   const refreshIdeas = () => {
     if (selectedCategory) {
-      const randomPrompts = getRandomPromptsFromCategory(selectedCategory.id)
-      setCurrentPrompts(randomPrompts)
+      try {
+        const randomPrompts = getRandomPromptsFromCategory(selectedCategory.id)
+        if (!randomPrompts || randomPrompts.length === 0) {
+          setError('No prompts found for this category. Please try another category.')
+          return
+        }
+        setCurrentPrompts(randomPrompts)
+        setError('')
+      } catch (error) {
+        console.error('Error refreshing prompts:', error)
+        setError('Failed to refresh prompts. Please try again.')
+      }
     }
   }
 
@@ -607,38 +656,29 @@ const Record = () => {
             ></div>
             
             {/* Modal */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[80vh] overflow-hidden">
-              <div className="bg-dad-white rounded-2xl shadow-strong border border-dad-blue-gray m-4">
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl">
+              <div className="bg-white rounded-2xl shadow-strong border border-dad-blue-gray m-4">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-dad-blue-gray">
                   <div className="flex items-center">
                     <Lightbulb className="w-6 h-6 text-dad-accent mr-3" />
-                    <h3 className="text-xl font-heading font-bold text-dad-dark">
-                      {selectedCategory ? selectedCategory.name : 'Video Ideas'}
+                    <h3 className="text-xl font-bold text-dad-dark">
+                      {selectedCategory ? selectedCategory.name : 'Choose a Category'}
                     </h3>
                   </div>
                   <div className="flex items-center space-x-2">
                     {selectedCategory && (
-                      <>
-                        <button
-                          onClick={refreshIdeas}
-                          className="flex items-center px-3 py-2 bg-dad-accent text-white rounded-lg hover:bg-dad-dark transition-all duration-300"
-                        >
-                          <RefreshCw className="w-4 h-4 mr-1" />
-                          Refresh
-                        </button>
-                        <button
-                          onClick={() => setSelectedCategory(null)}
-                          className="flex items-center px-3 py-2 text-dad-olive hover:text-dad-dark"
-                        >
-                          <ArrowLeft className="w-4 h-4 mr-1" />
-                          Back to Categories
-                        </button>
-                      </>
+                      <button
+                        onClick={() => setSelectedCategory(null)}
+                        className="flex items-center px-3 py-2 text-dad-olive hover:text-dad-dark"
+                      >
+                        <ArrowLeft className="w-4 h-4 mr-1" />
+                        Back to Categories
+                      </button>
                     )}
                     <button
                       onClick={() => setShowIdeasModal(false)}
-                      className="text-dad-olive hover:text-dad-dark transition-colors duration-300"
+                      className="text-dad-olive hover:text-dad-dark"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -646,48 +686,41 @@ const Record = () => {
                 </div>
                 
                 {/* Content */}
-                <div className="max-h-96 overflow-y-auto p-6">
+                <div className="p-6">
                   {!selectedCategory ? (
                     // Categories Grid
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       {categories.map((category) => (
                         <button
                           key={category.id}
                           onClick={() => selectCategory(category)}
-                          className="flex items-center p-4 bg-dad-warm hover:bg-dad-blue-gray hover:bg-opacity-20 rounded-lg transition-all duration-300 border border-transparent hover:border-dad-accent"
+                          className="flex items-center px-4 py-3 bg-dad-warm hover:bg-dad-blue-gray hover:bg-opacity-20 rounded-lg transition-all duration-300 border border-transparent hover:border-dad-accent"
                         >
-                          <div className="bg-dad-accent bg-opacity-20 p-3 rounded-lg mr-4">
-                            {React.createElement(icons[category.icon], { className: "w-6 h-6 text-dad-accent" })}
+                          <div className="flex items-center w-full">
+                            <div className="bg-dad-accent bg-opacity-20 p-2 rounded-lg mr-3 flex-shrink-0">
+                              {React.createElement(icons[category.icon], { className: "w-4 h-4 text-dad-accent" })}
+                            </div>
+                            <span className="text-dad-dark font-medium text-sm text-left">{category.name}</span>
                           </div>
-                          <span className="text-dad-dark font-medium">{category.name}</span>
                         </button>
                       ))}
                     </div>
                   ) : (
                     // Prompts List
-                    <>
-                      <p className="text-dad-olive mb-4">Choose a prompt to inspire your recording:</p>
-                      <div className="space-y-3">
-                        {currentPrompts.map((prompt, index) => (
-                          <button
-                            key={index}
-                            onClick={() => selectPrompt(prompt)}
-                            className="w-full text-left p-4 bg-dad-warm hover:bg-dad-blue-gray hover:bg-opacity-20 rounded-lg transition-all duration-300 border border-transparent hover:border-dad-accent"
-                          >
-                            <p className="text-dad-dark leading-relaxed">{prompt}</p>
-                          </button>
-                        ))}
-                      </div>
-                      
-                      <div className="mt-6 pt-4 border-t border-dad-blue-gray">
+                    <div className="space-y-3">
+                      {currentPrompts.map((prompt, index) => (
                         <button
-                          onClick={() => navigate('/prompts')}
-                          className="text-dad-accent hover:text-dad-dark font-medium"
+                          key={index}
+                          onClick={() => {
+                            selectPrompt(prompt)
+                            setShowIdeasModal(false)
+                          }}
+                          className="w-full text-left p-4 bg-dad-warm hover:bg-dad-blue-gray hover:bg-opacity-20 rounded-lg transition-all duration-300 border border-transparent hover:border-dad-accent"
                         >
-                          View all prompts →
+                          <p className="text-dad-dark leading-relaxed">{prompt}</p>
                         </button>
-                      </div>
-                    </>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
