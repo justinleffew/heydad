@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import React, { useState } from 'react'
+import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 const Signup = () => {
@@ -10,8 +10,6 @@ const Signup = () => {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const { signUp, signInWithGoogle, user } = useAuth()
-  const [searchParams] = useSearchParams()
-  const referralCode = searchParams.get('ref')
 
   if (user) {
     return <Navigate to="/dashboard" replace />
@@ -29,7 +27,7 @@ const Signup = () => {
     setError('')
     setMessage('')
 
-    const { error } = await signUp(email, password, referralCode)
+    const { error } = await signUp(email, password)
     
     if (error) {
       setError(error.message)
@@ -63,11 +61,6 @@ const Signup = () => {
           <p className="mt-2 text-center text-sm text-dad-olive">
             Start building your legacy for your kids
           </p>
-          {referralCode && (
-            <p className="mt-2 text-center text-sm text-green-600">
-              You were invited by a friend! They'll get a free month when you subscribe.
-            </p>
-          )}
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

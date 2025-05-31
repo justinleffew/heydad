@@ -1,13 +1,68 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { LogOut, Video, Home, Users, Plus, Menu, X, Settings, Info, Bell, Lightbulb } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 const Layout = ({ children }) => {
   const { signOut, user } = useAuth()
   const location = useLocation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications()
+    }
+  }, [user])
+
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('notifications')
+        .select(`
+          *,
+          children (
+            name
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      if (error) throw error
+
+      // Transform the data to include title and time
+      const transformedData = data.map(notification => ({
+        id: notification.id,
+        title: `${notification.children?.name || 'Unknown'} - ${notification.type}`,
+        message: notification.message,
+        time: formatTimeAgo(notification.created_at),
+        unread: !notification.read
+      }))
+
+      setNotifications(transformedData)
+    } catch (error) {
+      console.error('Error fetching notifications:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatTimeAgo = (dateString) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) return 'Just now'
+    if (diffInHours < 24) return `${diffInHours}h ago`
+    const diffInDays = Math.floor(diffInHours / 24)
+    if (diffInDays < 7) return `${diffInDays}d ago`
+    return date.toLocaleDateString()
+  }
 
   const handleSignOut = async () => {
     await signOut()
@@ -31,30 +86,21 @@ const Layout = ({ children }) => {
     setIsNotificationsOpen(false)
   }
 
-  // Mock notifications data - replace with real data later
-  const notifications = [
-    {
-      id: 1,
-      title: "Video unlocked for Easton",
-      message: "Your message 'First Day of School' is now available",
-      time: "2 hours ago",
-      unread: true
-    },
-    {
-      id: 2,
-      title: "New child request",
-      message: "Walker sent you a question about college",
-      time: "1 day ago",
-      unread: true
-    },
-    {
-      id: 3,
-      title: "Backup completed",
-      message: "All your videos have been safely backed up",
-      time: "3 days ago",
-      unread: false
+  const markAllAsRead = async () => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', user.id)
+        .eq('read', false)
+
+      if (error) throw error
+
+      setNotifications(prev => prev.map(n => ({ ...n, unread: false })))
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error)
     }
-  ]
+  }
 
   const unreadCount = notifications.filter(n => n.unread).length
 
@@ -108,7 +154,7 @@ const Layout = ({ children }) => {
                 }`}
               >
                 <Video className="w-4 h-4 mr-2" />
-                Videos
+                Memories
               </Link>
               
               <Link
@@ -213,7 +259,7 @@ const Layout = ({ children }) => {
                     }`}
                   >
                     <Video className="w-5 h-5 mr-3" />
-                    Videos
+                    Memories
                   </Link>
                   
                   <Link
@@ -310,7 +356,11 @@ const Layout = ({ children }) => {
               
               {/* Notifications List */}
               <div className="max-h-96 overflow-y-auto">
-                {notifications.length === 0 ? (
+                {loading ? (
+                  <div className="p-8 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dad-olive mx-auto"></div>
+                  </div>
+                ) : notifications.length === 0 ? (
                   <div className="p-8 text-center">
                     <Bell className="w-12 h-12 text-dad-olive mx-auto mb-4 opacity-50" />
                     <p className="text-dad-olive font-medium">No notifications yet</p>
@@ -349,7 +399,10 @@ const Layout = ({ children }) => {
               {/* Footer */}
               {notifications.length > 0 && (
                 <div className="p-4 border-t border-dad-blue-gray">
-                  <button className="w-full text-center text-dad-olive hover:text-dad-dark font-medium text-sm transition-colors duration-300">
+                  <button 
+                    onClick={markAllAsRead}
+                    className="w-full text-center text-dad-olive hover:text-dad-dark font-medium text-sm transition-colors duration-300"
+                  >
                     Mark all as read
                   </button>
                 </div>

@@ -265,9 +265,9 @@ const Record = () => {
   const handleFileUpload = (event) => {
     const file = event.target.files[0]
     if (file) {
-      // Check file size (max 100MB)
-      if (file.size > 100 * 1024 * 1024) {
-        setError('File size must be less than 100MB')
+      // Check file size (max 200MB)
+      if (file.size > 200 * 1024 * 1024) {
+        setError('File size must be less than 200MB')
         return
       }
 
@@ -374,11 +374,70 @@ const Record = () => {
       
       // Upload video to Supabase Storage
       const fileName = `${user.id}/${Date.now()}.webm`
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('videos')
-        .upload(fileName, recordedBlob)
+      console.log('Starting video upload:', {
+        fileName,
+        fileSize: recordedBlob.size,
+        fileType: recordedBlob.type
+      })
 
-      if (uploadError) throw uploadError
+      // For files larger than 50MB, use chunked upload
+      if (recordedBlob.size > 50 * 1024 * 1024) {
+        const chunkSize = 5 * 1024 * 1024 // 5MB chunks
+        const chunks = Math.ceil(recordedBlob.size / chunkSize)
+        
+        for (let i = 0; i < chunks; i++) {
+          const start = i * chunkSize
+          const end = Math.min(start + chunkSize, recordedBlob.size)
+          const chunk = recordedBlob.slice(start, end)
+          
+          const { data: chunkData, error: chunkError } = await supabase.storage
+            .from('videos')
+            .upload(`${fileName}.part${i}`, chunk, {
+              cacheControl: '3600',
+              upsert: true
+            })
+
+          if (chunkError) {
+            console.error('Chunk upload error:', chunkError)
+            throw new Error(`Chunk upload failed: ${chunkError.message}`)
+          }
+
+          // Update progress based on chunks
+          const progress = Math.round(((i + 1) / chunks) * 40)
+          setProcessingProgress(progress)
+        }
+
+        // After all chunks are uploaded, create the final file
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('videos')
+          .upload(fileName, recordedBlob, {
+            cacheControl: '3600',
+            upsert: true
+          })
+
+        if (uploadError) {
+          console.error('Final upload error:', uploadError)
+          throw new Error(`Final upload failed: ${uploadError.message}`)
+        }
+
+        console.log('Video upload successful:', uploadData)
+      } else {
+        // For smaller files, use direct upload
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('videos')
+          .upload(fileName, recordedBlob, {
+            cacheControl: '3600',
+            upsert: false
+          })
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError)
+          throw new Error(`Upload failed: ${uploadError.message}`)
+        }
+
+        console.log('Video upload successful:', uploadData)
+      }
+      
       setProcessingProgress(40)
 
       // Upload thumbnail to Supabase Storage
@@ -826,7 +885,7 @@ const Record = () => {
               <h3 className="text-lg font-semibold text-dad-dark mb-4">When Should This Unlock?</h3>
               
               <div className="space-y-4">
-                <div className="flex space-x-4">
+                <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0">
                   <label className="flex items-center">
                     <input
                       type="radio"

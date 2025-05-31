@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
-import ReferralModal from '../components/ReferralModal'
-import { Plus, Video, Calendar, Clock, Users, Share, Heart, Trophy, Timer, Camera, Badge, Play, Lock, Unlock, AlertCircle, CheckCircle2, Gift } from 'lucide-react'
+import ImageCropper from '../components/ImageCropper'
+import VideoPlayer from '../components/VideoPlayer'
+import { Plus, Video, Calendar, Clock, Users, Share, Heart, Trophy, Timer, Camera, Badge, Play, Lock, Unlock, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 const Dashboard = () => {
   const { user } = useAuth()
@@ -13,16 +14,30 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true)
   const [childImageUrls, setChildImageUrls] = useState({})
   const [thumbnailUrls, setThumbnailUrls] = useState({})
-  const [isReferralModalOpen, setIsReferralModalOpen] = useState(false)
-  const [referralStats, setReferralStats] = useState({ totalReferrals: 0, freeMonths: 0 })
+  const [showCropper, setShowCropper] = useState(false)
+  const [tempImageFile, setTempImageFile] = useState(null)
+  const [editingChild, setEditingChild] = useState(null)
+  const [currentChildIndex, setCurrentChildIndex] = useState(0)
+  const [isChildrenExpanded, setIsChildrenExpanded] = useState(false)
+  const [selectedVideo, setSelectedVideo] = useState(null)
+  const [videoUrl, setVideoUrl] = useState(null)
 
   useEffect(() => {
     if (user) {
       fetchChildren()
       fetchVideos()
-      fetchReferralStats()
     }
   }, [user])
+
+  useEffect(() => {
+    if (children.length > 1) {
+      // Sort children by age (youngest first)
+      const sortedChildren = [...children].sort((a, b) => {
+        return new Date(b.birthdate) - new Date(a.birthdate)
+      })
+      setChildren(sortedChildren)
+    }
+  }, [children.length])
 
   const fetchChildren = async () => {
     try {
@@ -102,17 +117,10 @@ const Dashboard = () => {
     try {
       const { data, error } = await supabase
         .from('videos')
-        .select(`
-          *,
-          video_children (
-            children (
-              id,
-              name
-            )
-          )
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
+        .limit(6)
 
       if (error) throw error
       
@@ -127,32 +135,6 @@ const Dashboard = () => {
       console.error('Error fetching videos:', error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const fetchReferralStats = async () => {
-    try {
-      // Get user's free months
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('free_months')
-        .eq('id', user.id)
-        .single()
-
-      // Get total referrals
-      const { data: referrals, error: referralError } = await supabase
-        .from('referrals')
-        .select('id')
-        .eq('referrer_id', user.id)
-
-      if (!profileError && !referralError) {
-        setReferralStats({
-          totalReferrals: referrals?.length || 0,
-          freeMonths: profile?.free_months || 0
-        })
-      }
-    } catch (error) {
-      console.error('Error fetching referral stats:', error)
     }
   }
 
@@ -202,13 +184,8 @@ const Dashboard = () => {
     const totalChildren = children.length
     
     // Calculate total recording time (assuming average 2 minutes per video for now)
-    // In a real app, you'd store actual duration in the database
     const estimatedMinutesPerVideo = 2
     const totalMinutesRecorded = totalVideos * estimatedMinutesPerVideo
-    
-    // Calculate AI Dad progress (10 hours = 600 minutes)
-    const totalMinutesRequired = 600
-    const aiDadProgress = Math.min((totalMinutesRecorded / totalMinutesRequired) * 100, 100)
     
     // Get current month's videos
     const currentMonth = new Date().getMonth()
@@ -229,9 +206,7 @@ const Dashboard = () => {
       totalChildren,
       totalMinutesRecorded,
       currentMonthMinutes,
-      oldestChild,
-      aiDadProgress,
-      totalMinutesRequired
+      oldestChild
     }
   }
 
@@ -260,6 +235,112 @@ const Dashboard = () => {
     return null
   }
 
+  const handleImageUpload = async (childId, file) => {
+    if (file) {
+      // Check file size (max 20MB)
+      if (file.size > 20 * 1024 * 1024) {
+        console.error('Image size must be less than 20MB')
+        return
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        console.error('Please select an image file')
+        return
+      }
+
+      setTempImageFile(file)
+      setEditingChild(childId)
+      setShowCropper(true)
+    }
+  }
+
+  const handleCropComplete = async (croppedBlob) => {
+    if (!editingChild) return
+
+    try {
+      const croppedFile = new File([croppedBlob], tempImageFile.name, {
+        type: 'image/jpeg',
+        lastModified: Date.now(),
+      })
+
+      // Upload the cropped image
+      const fileName = `${user.id}/${Date.now()}_${croppedFile.name}`
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('child-images')
+        .upload(fileName, croppedFile)
+
+      if (uploadError) throw uploadError
+
+      // Update the child's image path
+      const { error: updateError } = await supabase
+        .from('children')
+        .update({ image_path: uploadData.path })
+        .eq('id', editingChild)
+
+      if (updateError) throw updateError
+
+      // Refresh the children data
+      await fetchChildren()
+    } catch (error) {
+      console.error('Error updating child image:', error)
+    } finally {
+      setShowCropper(false)
+      setTempImageFile(null)
+      setEditingChild(null)
+    }
+  }
+
+  const handleCropCancel = () => {
+    setShowCropper(false)
+    setTempImageFile(null)
+    setEditingChild(null)
+  }
+
+  const getCurrentChildImage = () => {
+    if (children.length === 0) return null
+    if (children.length === 1) return childImageUrls[children[0].id]
+    return childImageUrls[children[currentChildIndex].id]
+  }
+
+  useEffect(() => {
+    if (children.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentChildIndex((prevIndex) => (prevIndex + 1) % children.length)
+      }, 5000) // Rotate every 5 seconds
+      return () => clearInterval(interval)
+    }
+  }, [children.length])
+
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 18) return 'Good afternoon'
+    return 'Good evening'
+  }
+
+  const handlePlayVideo = async (video) => {
+    try {
+      const { data: { signedUrl }, error } = await supabase
+        .storage
+        .from('videos')
+        .createSignedUrl(video.file_path, 3600) // URL valid for 1 hour
+
+      if (error) throw error
+
+      setSelectedVideo(video)
+      setVideoUrl(signedUrl)
+    } catch (error) {
+      console.error('Error getting signed URL:', error)
+      alert('Error playing video. Please try again.')
+    }
+  }
+
+  const handleCloseVideo = () => {
+    setSelectedVideo(null)
+    setVideoUrl(null)
+  }
+
   if (loading) {
     return (
       <Layout>
@@ -273,215 +354,82 @@ const Dashboard = () => {
   return (
     <Layout>
       <div className="px-4 sm:px-0">
-        {/* Quick Actions - Enhanced */}
-        <div className="mb-10">
-          <div className="grid grid-cols-1 gap-6">
-            <Link
-              to="/record"
-              className="group bg-white text-dad-dark p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-dad-olive"
-            >
-              <div className="flex items-center">
-                <div className="bg-dad-olive bg-opacity-10 p-4 rounded-xl mr-6 group-hover:bg-opacity-20 transition-all duration-300">
-                  <Video className="w-10 h-10 text-dad-olive" />
+        {/* Personalized Greeting */}
+        <div className="max-w-4xl mx-auto mb-6">
+          <h1 className="text-3xl font-heading font-bold text-dad-dark">
+            {getGreeting()}, {user?.user_metadata?.first_name || 'Dad'}
+          </h1>
+        </div>
+
+        {/* Consolidated Metrics Bar */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="bg-dad-dark rounded-2xl p-4 text-white shadow-lg">
+            <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center space-x-16">
+                <div className="flex items-center">
+                  <Heart className="w-5 h-5 mr-2" style={{ color: '#ffba08' }} />
+                  <span className="text-lg font-medium">{stats.totalVideos} {stats.totalVideos === 1 ? 'memory' : 'memories'}</span>
                 </div>
-                <div>
-                  <h3 className="text-3xl font-heading font-bold mb-2">Create a new memory</h3>
-                  <p className="text-dad-olive font-medium">Record a video message your children will cherish forever</p>
+                <div className="flex items-center">
+                  <Timer className="w-5 h-5 mr-2" style={{ color: '#ffba08' }} />
+                  <span className="text-lg font-medium">{stats.totalMinutesRecorded} mins recorded</span>
                 </div>
               </div>
-            </Link>
+            </div>
           </div>
         </div>
 
-        {/* Motivation/Stats Module - Enhanced */}
-        <div className="mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {/* Memories Card - Featured */}
-            <div className="bg-dad-dark rounded-2xl p-4 text-white shadow-lg relative">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-baseline">
-                    <span className="text-4xl font-heading font-bold">{stats.totalVideos}</span>
-                    <span className="text-xl ml-3 font-medium text-white text-opacity-90">memories created</span>
-                  </div>
-                </div>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <div className="bg-white bg-opacity-20 w-14 h-14 rounded-lg flex items-center justify-center">
-                    <Heart className="w-10 h-10" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Minutes Card */}
-            <div className="bg-dad-dark rounded-2xl p-4 text-white shadow-lg relative">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-baseline">
-                    <span className="text-4xl font-heading font-bold">{stats.currentMonthMinutes}</span>
-                    <span className="text-xl ml-3 font-medium text-white text-opacity-90">mins</span>
-                  </div>
-                  <p className="text-sm text-white text-opacity-90 font-medium mt-1">
-                    of video recorded this month
-                  </p>
-                </div>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <div className="bg-white bg-opacity-20 w-14 h-14 rounded-lg flex items-center justify-center">
-                    <Timer className="w-10 h-10" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Referrals Card */}
-            <div className="bg-dad-dark rounded-2xl p-4 text-white shadow-lg relative">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-baseline">
-                    <span className="text-4xl font-heading font-bold">{referralStats.freeMonths}</span>
-                    <span className="text-xl ml-3 font-medium text-white text-opacity-90">free months</span>
-                  </div>
-                  <p className="text-sm text-white text-opacity-90 font-medium mt-1">
-                    {referralStats.totalReferrals} referrals
-                  </p>
-                </div>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <div className="bg-white bg-opacity-20 w-14 h-14 rounded-lg flex items-center justify-center">
-                    <Gift className="w-10 h-10" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* AI Dad Progress Bar */}
-          <div className="mt-8 max-w-2xl mx-auto">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-lg font-heading font-bold">AI Dad: {Math.round(stats.aiDadProgress)}% complete</span>
-              <span className="text-sm font-medium text-dad-olive">{stats.totalMinutesRecorded}/{stats.totalMinutesRequired} mins</span>
-            </div>
-            <div className="w-full bg-dad-white bg-opacity-20 rounded-full h-4">
-              <div 
-                className="bg-gradient-to-r from-dad-olive to-dad-gold h-4 rounded-full transition-all duration-300"
-                style={{ width: `${stats.aiDadProgress}%` }}
-              />
-            </div>
-            <p className="text-base text-center mt-3 font-medium">
-              You're building something only a few ever will. {stats.totalMinutesRequired - stats.totalMinutesRecorded} minutes to go.
-            </p>
-          </div>
-        </div>
-
-        {/* Hero Section - Moved */}
-        <div className="relative mb-12">
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage: 'url("/images/dadson.png")',
-              filter: 'grayscale(100%)',
-              opacity: '0.4',
-              height: '180px'
-            }}
-          >
-            <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-          </div>
-          <div className="relative pt-4 pb-2 px-4 sm:px-6 lg:px-8">
-            <h1 className="text-2xl sm:text-3xl font-heading font-bold text-white mb-1 tracking-tight max-w-3xl">
-              They may forget the little things. But they'll have this forever.
-            </h1>
-            <p className="text-sm sm:text-base text-white text-opacity-90 max-w-2xl">
-              {children.length === 0 
-                ? "You're about to start building a legacy your kids will cherish. Let's begin."
-                : children.length === 1
-                ? `You've started building a legacy ${children[0].name} will cherish. Let's keep going.`
-                : children.length === 2
-                ? `You've started building a legacy ${children[0].name} & ${children[1].name} will cherish. Let's keep going.`
-                : `You've started building a legacy ${children.slice(0, -2).map(child => child.name).join(', ')}, ${children[children.length - 2].name} & ${children[children.length - 1].name} will cherish. Let's keep going.`
-              }
-            </p>
-          </div>
-        </div>
-
-        {/* Children Cards - Enhanced */}
-        <div className="mb-10">
-          <h2 className="text-3xl font-heading font-bold text-legacy mb-2">Your Children</h2>
-          <p className="text-dad-olive font-medium italic mb-6">
-            This is who you're doing it for
-          </p>
-          {children.length === 0 ? (
-            <div className="card-legacy p-10 text-center">
-              <div className="bg-dad-olive bg-opacity-10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Users className="w-10 h-10 text-dad-olive" />
-              </div>
-              <h3 className="text-xl font-heading font-bold text-legacy mb-3">No children added yet</h3>
-              <p className="text-dad-olive font-medium">
-                Add your first child using the "Add Child" option in the menu to start creating legacy videos
+        {/* Hero Section with Primary CTA */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <div className="bg-gradient-to-r from-dad-dark to-dad-olive rounded-2xl p-8 shadow-lg relative overflow-hidden">
+            <div className="relative z-10">
+              <h1 className="text-3xl sm:text-4xl font-heading font-bold text-white mb-4">
+                Create a Memory for Your Children
+              </h1>
+              <p className="text-[#ffba08] text-opacity-90 mb-6 max-w-2xl">
+                Record a video message your children will cherish forever. Tap to start recording now.
               </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {children.map((child) => (
-                <Link 
-                  key={child.id} 
-                  to="/children"
-                  className="card-legacy overflow-hidden group hover:scale-105 transition-all duration-300 cursor-pointer"
+              <div className="flex items-center justify-between">
+                <Link
+                  to="/record"
+                  className="inline-flex items-center bg-white text-dad-dark px-6 py-3 rounded-xl font-bold text-base hover:bg-opacity-90 transition-all duration-300 transform hover:-translate-y-1"
                 >
-                  {/* Photo Section - Enhanced */}
-                  <div className="relative h-56 bg-gradient-subtle">
-                    {child.image_path && childImageUrls[child.id] ? (
-                      <img
-                        src={childImageUrls[child.id]}
-                        alt={child.name}
-                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                        style={{ objectPosition: '50% 30%' }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <div className="text-center text-dad-olive">
-                          <div className="bg-dad-white bg-opacity-80 p-4 rounded-2xl mb-3 shadow-soft">
-                            <Camera className="w-12 h-12 mx-auto" />
-                          </div>
-                          <p className="font-medium">Add Photo</p>
-                        </div>
-                      </div>
-                    )}
-                    {/* Age Badge - Enhanced */}
-                    <div className="absolute top-4 right-4">
-                      <div className="bg-dad-gold text-dad-white px-4 py-2 rounded-xl font-heading font-bold text-sm shadow-medium">
-                        Age {calculateAge(child.birthdate)}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Info Section - Enhanced */}
-                  <div className="p-6">
-                    <h3 className="text-2xl font-heading font-bold text-legacy mb-2">{child.name}</h3>
-                    <p className="text-dad-olive font-medium mb-4">
-                      Born: {new Date(child.birthdate).toLocaleDateString()}
-                    </p>
-                    
-                    {/* Stats - Enhanced */}
-                    <div className="flex justify-between items-center text-sm">
-                      <div className="bg-dad-warm px-3 py-2 rounded-lg">
-                        <span className="font-semibold text-dad-dark">
-                          {videos.filter(v => v.video_children?.some(vc => vc.children.id === child.id)).length} videos
-                        </span>
-                      </div>
-                      <div className="flex items-center text-dad-olive font-medium">
-                        <Lock className="w-4 h-4 mr-1" />
-                        Next unlock: Age 18
-                      </div>
-                    </div>
-                  </div>
+                  <Video className="w-5 h-5 mr-2" />
+                  Start Recording
                 </Link>
-              ))}
+                
+                {/* Avatar Group */}
+                {children.length > 0 && (
+                  <div className="flex -space-x-3">
+                    {children.map((child, index) => (
+                      <div
+                        key={child.id}
+                        className="w-16 h-16 rounded-full border-2 border-white overflow-hidden"
+                        style={{ zIndex: children.length - index }}
+                      >
+                        {childImageUrls[child.id] ? (
+                          <img
+                            src={childImageUrls[child.id]}
+                            alt={child.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-dad-olive flex items-center justify-center">
+                            <Users className="w-8 h-8 text-white" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Recent Videos - Enhanced */}
         <div>
-          <h2 className="text-3xl font-heading font-bold text-legacy mb-6">Your Legacy Videos</h2>
+          <h2 className="text-3xl font-heading font-bold text-legacy mb-6">Your Videos</h2>
           {videos.length === 0 ? (
             <div className="card-legacy p-10 text-center">
               <div className="bg-dad-olive bg-opacity-10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
@@ -516,7 +464,10 @@ const Dashboard = () => {
                         </div>
 
                         {/* Video Thumbnail - Enhanced */}
-                        <div className="w-full h-40 relative overflow-hidden rounded-xl mb-4">
+                        <div 
+                          className="w-full h-40 relative overflow-hidden rounded-xl mb-4 cursor-pointer"
+                          onClick={() => handlePlayVideo(video)}
+                        >
                           {thumbnailUrls[video.id] ? (
                             <img
                               src={thumbnailUrls[video.id]}
@@ -530,6 +481,11 @@ const Dashboard = () => {
                               </div>
                             </div>
                           )}
+                          
+                          {/* Play Button Overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <Play className="w-12 h-12 text-white" />
+                          </div>
                           
                           {/* Unlock Badge - Enhanced */}
                           <div className="absolute top-2 right-2">
@@ -555,13 +511,13 @@ const Dashboard = () => {
 
                         {/* Action Buttons - Enhanced */}
                         <div className="flex gap-2">
-                          <Link
-                            to="/videos"
+                          <button
+                            onClick={() => handlePlayVideo(video)}
                             className="flex-1 flex items-center justify-center px-4 py-2 bg-dad-dark text-white rounded-lg hover:bg-dad-olive transition-colors duration-300"
                           >
                             <Play className="w-4 h-4 mr-2" />
                             Watch Again
-                          </Link>
+                          </button>
                           
                           <button
                             disabled
@@ -600,13 +556,13 @@ const Dashboard = () => {
 
                         {/* Action Buttons - Enhanced */}
                         <div className="flex items-center space-x-3">
-                          <Link
-                            to="/videos"
+                          <button
+                            onClick={() => handlePlayVideo(video)}
                             className="flex items-center px-4 py-2 bg-dad-dark text-white rounded-lg hover:bg-dad-olive transition-colors duration-300"
                           >
                             <Play className="w-4 h-4 mr-2" />
                             Watch Again
-                          </Link>
+                          </button>
                           
                           <button
                             disabled
@@ -620,7 +576,10 @@ const Dashboard = () => {
                     </div>
 
                     {/* Video Thumbnail - Enhanced */}
-                    <div className="flex-shrink-0 relative w-48 h-32 overflow-hidden">
+                    <div 
+                      className="flex-shrink-0 relative w-48 h-32 overflow-hidden cursor-pointer"
+                      onClick={() => handlePlayVideo(video)}
+                    >
                       {thumbnailUrls[video.id] ? (
                         <img
                           src={thumbnailUrls[video.id]}
@@ -634,6 +593,11 @@ const Dashboard = () => {
                           </div>
                         </div>
                       )}
+                      
+                      {/* Play Button Overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <Play className="w-10 h-10 text-white" />
+                      </div>
                       
                       {/* Unlock Badge - Enhanced */}
                       <div className="absolute top-2 right-2">
@@ -664,11 +628,21 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Referral Modal */}
-      <ReferralModal
-        isOpen={isReferralModalOpen}
-        onClose={() => setIsReferralModalOpen(false)}
-      />
+      {/* Video Player Modal */}
+      {selectedVideo && videoUrl && (
+        <VideoPlayer
+          videoUrl={videoUrl}
+          onClose={handleCloseVideo}
+        />
+      )}
+
+      {showCropper && tempImageFile && (
+        <ImageCropper
+          imageFile={tempImageFile}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </Layout>
   )
 }

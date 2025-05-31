@@ -33,14 +33,14 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe()
   }, [])
 
-  const signUp = async (email, password, referralCode = null) => {
+  const signUp = async (email, password) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     })
 
     if (data?.user) {
-      // Create profile with referral code
+      // Create profile
       const { error: profileError } = await supabase
         .from('profiles')
         .insert([
@@ -53,30 +53,6 @@ export const AuthProvider = ({ children }) => {
       if (profileError) {
         console.error('Error creating profile:', profileError)
         return { data: null, error: profileError }
-      }
-
-      // If there's a referral code, create a referral record
-      if (referralCode) {
-        const { data: referrer, error: referrerError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('referral_code', referralCode)
-          .single()
-
-        if (referrer) {
-          const { error: referralError } = await supabase
-            .from('referrals')
-            .insert([
-              {
-                referrer_id: referrer.id,
-                referred_email: email,
-              }
-            ])
-
-          if (referralError) {
-            console.error('Error creating referral:', referralError)
-          }
-        }
       }
     }
 

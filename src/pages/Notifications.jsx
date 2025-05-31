@@ -39,51 +39,26 @@ const Notifications = () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Mock notifications for now - in a real app, these would come from a notifications table
-      const mockNotifications = [
-        {
-          id: 1,
-          type: 'question',
-          child_name: 'Easton',
-          child_id: 1,
-          message: "Dad, I'm nervous about my first day at high school tomorrow. Do you have any advice for me?",
-          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          read: false,
-          replied: false
-        },
-        {
-          id: 2,
-          type: 'request',
-          child_name: 'Walker',
-          child_id: 2,
-          message: "Can you record a video about how to handle bullies? Some kids at school are being mean.",
-          created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-          read: true,
-          replied: false
-        },
-        {
-          id: 3,
-          type: 'milestone',
-          child_name: 'Easton',
-          child_id: 1,
-          message: "I got accepted to college! Can you unlock the graduation video you made for me?",
-          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-          read: true,
-          replied: true
-        },
-        {
-          id: 4,
-          type: 'question',
-          child_name: 'Walker',
-          child_id: 2,
-          message: "Dad, what was your biggest mistake when you were my age? I feel like I messed up really bad.",
-          created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-          read: false,
-          replied: false
-        }
-      ]
+      const { data, error } = await supabase
+        .from('notifications')
+        .select(`
+          *,
+          children (
+            name
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
 
-      setNotifications(mockNotifications)
+      if (error) throw error
+
+      // Transform the data to include child_name
+      const transformedData = data.map(notification => ({
+        ...notification,
+        child_name: notification.children?.name || 'Unknown'
+      }))
+
+      setNotifications(transformedData)
     } catch (error) {
       console.error('Error fetching notifications:', error)
     } finally {
@@ -92,19 +67,56 @@ const Notifications = () => {
   }
 
   const markAsRead = async (notificationId) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === notificationId ? { ...notif, read: true } : notif
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notificationId)
+
+      if (error) throw error
+
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === notificationId ? { ...notif, read: true } : notif
+        )
       )
-    )
+    } catch (error) {
+      console.error('Error marking notification as read:', error)
+    }
+  }
+
+  const markAllAsRead = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', user.id)
+        .eq('read', false)
+
+      if (error) throw error
+
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error)
+    }
   }
 
   const handleReply = async (notificationId) => {
     if (!replyMessage.trim()) return
 
     try {
-      // In a real app, this would save the reply to the database
-      console.log('Sending reply:', replyMessage, 'to notification:', notificationId)
+      const { error } = await supabase
+        .from('notifications')
+        .update({ 
+          replied: true,
+          read: true
+        })
+        .eq('id', notificationId)
+
+      if (error) throw error
       
       setNotifications(prev => 
         prev.map(notif => 
@@ -352,9 +364,7 @@ const Notifications = () => {
             <h3 className="text-lg font-medium text-dad-dark mb-3">Quick Actions</h3>
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => {
-                  setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-                }}
+                onClick={markAllAsRead}
                 className="flex items-center px-3 py-2 text-sm bg-white border border-dad-blue-gray rounded-md hover:bg-gray-50"
               >
                 <CheckCircle className="w-4 h-4 mr-1" />

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -11,8 +11,14 @@ import Children from './pages/Children'
 import Settings from './pages/Settings'
 import About from './pages/About'
 import Prompts from './pages/Prompts'
+import { testConnection } from './lib/supabase'
 
 function App() {
+  useEffect(() => {
+    // Test Supabase connection on app start
+    testConnection()
+  }, [])
+
   return (
     <AuthProvider>
       <div className="min-h-screen bg-dad-white">

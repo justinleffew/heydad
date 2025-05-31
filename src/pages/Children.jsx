@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
+import ImageCropper from '../components/ImageCropper'
 import { Users, Plus, Upload, X, Calendar, Edit, Trash2, User, Lock, Heart } from 'lucide-react'
 
 const Children = () => {
@@ -20,6 +21,8 @@ const Children = () => {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const { user } = useAuth()
+  const [showCropper, setShowCropper] = useState(false)
+  const [tempImageFile, setTempImageFile] = useState(null)
 
   useEffect(() => {
     fetchChildren()
@@ -130,13 +133,30 @@ const Children = () => {
         return
       }
 
-      setFormData(prev => ({
-        ...prev,
-        imageFile: file,
-        imagePreview: URL.createObjectURL(file)
-      }))
+      setTempImageFile(file)
+      setShowCropper(true)
       setError('')
     }
+  }
+
+  const handleCropComplete = (croppedBlob) => {
+    const croppedFile = new File([croppedBlob], tempImageFile.name, {
+      type: 'image/jpeg',
+      lastModified: Date.now(),
+    })
+
+    setFormData(prev => ({
+      ...prev,
+      imageFile: croppedFile,
+      imagePreview: URL.createObjectURL(croppedBlob)
+    }))
+    setShowCropper(false)
+    setTempImageFile(null)
+  }
+
+  const handleCropCancel = () => {
+    setShowCropper(false)
+    setTempImageFile(null)
   }
 
   const removeImage = () => {
@@ -265,21 +285,11 @@ const Children = () => {
     <Layout>
       <div className="px-4 sm:px-0">
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-dad-dark">Your Children</h1>
-              <p className="mt-2 text-dad-olive">
-                Create lasting memories and legacy videos for the ones you love most.
-              </p>
-            </div>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="flex items-center px-4 py-2 text-white rounded-md hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#95BB90' }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Child
-            </button>
+          <div>
+            <h1 className="text-3xl font-bold text-dad-dark">Your Children</h1>
+            <p className="mt-2 text-dad-olive">
+              Create lasting memories and legacy videos for the ones you love most.
+            </p>
           </div>
         </div>
 
@@ -390,7 +400,7 @@ const Children = () => {
                   type="submit"
                   disabled={formLoading}
                   className="flex items-center px-4 py-2 text-white rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
-                  style={{ backgroundColor: '#95BB90' }}
+                  style={{ backgroundColor: '#2C3E50' }}
                 >
                   {formLoading ? 'Saving...' : (editingChild ? 'Update Child' : 'Add Child')}
                 </button>
@@ -406,6 +416,14 @@ const Children = () => {
           </div>
         )}
 
+        {showCropper && tempImageFile && (
+          <ImageCropper
+            imageFile={tempImageFile}
+            onCropComplete={handleCropComplete}
+            onCancel={handleCropCancel}
+          />
+        )}
+
         {/* Children List */}
         {children.length === 0 ? (
           <div className="text-center py-12">
@@ -417,83 +435,99 @@ const Children = () => {
             <button
               onClick={() => setShowAddForm(true)}
               className="flex items-center mx-auto px-4 py-2 text-white rounded-md hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#95BB90' }}
+              style={{ backgroundColor: '#2C3E50' }}
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Your First Child
             </button>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {children.map((child) => (
-              <div key={child.id} className="bg-white border border-dad-blue-gray rounded-lg p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    {child.image_path && childImageUrls[child.id] ? (
-                      <img
-                        src={childImageUrls[child.id]}
-                        alt={child.name}
-                        className="w-16 h-16 object-cover object-center rounded-full border-2 border-dad-olive"
-                        style={{ objectPosition: '50% 30%' }}
-                        onError={(e) => {
-                          e.target.style.display = 'none'
-                          e.target.nextSibling.style.display = 'flex'
-                        }}
-                      />
-                    ) : null}
-                    {(!child.image_path || !childImageUrls[child.id]) && (
-                      <div className="w-16 h-16 bg-dad-blue-gray bg-opacity-20 rounded-full flex items-center justify-center border-2 border-dad-olive">
-                        <User className="w-8 h-8 text-dad-blue-gray" />
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="text-xl font-semibold text-dad-dark">{child.name}</h3>
-                      <div className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-dad-olive bg-opacity-10 text-dad-olive">
-                        <Heart className="w-3 h-3 mr-1" />
-                        {getAgeDescription(calculateAge(child.birthdate))}
+          <div className="space-y-6">
+            {/* Children Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {children.map((child) => (
+                <div key={child.id} className="bg-white border border-dad-blue-gray rounded-lg p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      {child.image_path && childImageUrls[child.id] ? (
+                        <img
+                          src={childImageUrls[child.id]}
+                          alt={child.name}
+                          className="w-16 h-16 object-cover object-center rounded-full border-2 border-dad-olive"
+                          style={{ objectPosition: '50% 30%' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none'
+                            e.target.nextSibling.style.display = 'flex'
+                          }}
+                        />
+                      ) : null}
+                      {(!child.image_path || !childImageUrls[child.id]) && (
+                        <div className="w-16 h-16 bg-dad-blue-gray bg-opacity-20 rounded-full flex items-center justify-center border-2 border-dad-olive">
+                          <User className="w-8 h-8 text-dad-blue-gray" />
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <h3 className="text-xl font-semibold text-dad-dark">{child.name}</h3>
+                          <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-dad-olive bg-opacity-10 text-dad-olive">
+                            {getAgeDescription(calculateAge(child.birthdate))}
+                          </div>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleEdit(child)}
+                        className="text-dad-olive hover:text-dad-dark"
+                        title="Edit child"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(child.id)}
+                        className="text-red-500 hover:text-red-700"
+                        title="Delete child"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleEdit(child)}
-                      className="text-dad-olive hover:text-dad-dark"
-                      title="Edit child"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(child.id)}
-                      className="text-red-500 hover:text-red-700"
-                      title="Delete child"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
 
-                <div className="space-y-2 text-sm text-dad-olive">
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Born: {new Date(child.birthdate).toLocaleDateString()}
+                  <div className="grid grid-cols-2 gap-4 text-sm text-dad-olive">
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      <span>Born: {new Date(child.birthdate).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Lock className="w-4 h-4 mr-2" />
+                      <span>Next unlock: {getNextUnlockDate(child.birthdate).toLocaleDateString()}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center">
-                    <Lock className="w-4 h-4 mr-2" />
-                    Next video unlocks: {getNextUnlockDate(child.birthdate).toLocaleDateString()}
-                  </div>
-                </div>
 
-                <div className="mt-4 pt-4 border-t border-dad-blue-gray">
-                  <button
-                    onClick={() => window.location.href = `/videos?child=${child.id}`}
-                    className="w-full flex items-center justify-center px-3 py-2 text-sm text-white rounded-md hover:opacity-90 transition-opacity"
-                    style={{ backgroundColor: '#95BB90' }}
-                  >
-                    View Videos
-                  </button>
+                  <div className="mt-4 pt-4 border-t border-dad-blue-gray">
+                    <button
+                      onClick={() => window.location.href = `/videos?child=${child.id}`}
+                      className="w-full flex items-center justify-center px-3 py-2 text-sm text-white rounded-md hover:opacity-90 transition-opacity"
+                      style={{ backgroundColor: '#2C3E50' }}
+                    >
+                      View Videos
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Add Child Button */}
+            <div className="flex justify-center">
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="flex items-center px-6 py-3 text-white rounded-xl hover:opacity-90 transition-all duration-300 transform hover:-translate-y-1"
+                style={{ backgroundColor: '#2C3E50' }}
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Add Another Child
+              </button>
+            </div>
           </div>
         )}
       </div>

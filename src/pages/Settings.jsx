@@ -25,6 +25,8 @@ const SettingsPage = () => {
     newPassword: '',
     confirmPassword: ''
   })
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
 
   useEffect(() => {
     if (user) {
@@ -52,16 +54,23 @@ const SettingsPage = () => {
       if (data) {
         setProfile({
           email: userEmail,
-          full_name: data.full_name || userName,
           phone: data.phone || ''
         })
+        // Split the full name into first and last name
+        const nameParts = (data.full_name || userName).split(' ')
+        setFirstName(nameParts[0] || '')
+        setLastName(nameParts.slice(1).join(' ') || '')
       } else {
         // If no profile exists, create one with the auth user data
         setProfile({
           email: userEmail,
-          full_name: userName,
           phone: ''
         })
+        
+        // Split the name from auth metadata
+        const nameParts = userName.split(' ')
+        setFirstName(nameParts[0] || '')
+        setLastName(nameParts.slice(1).join(' ') || '')
         
         // Optionally create the profile record
         if (userName) {
@@ -80,9 +89,11 @@ const SettingsPage = () => {
       // Fallback to auth user data
       setProfile({
         email: user?.email || '',
-        full_name: user?.user_metadata?.full_name || user?.user_metadata?.name || '',
         phone: ''
       })
+      const nameParts = (user?.user_metadata?.full_name || user?.user_metadata?.name || '').split(' ')
+      setFirstName(nameParts[0] || '')
+      setLastName(nameParts.slice(1).join(' ') || '')
     }
   }
 
@@ -116,21 +127,45 @@ const SettingsPage = () => {
     setMessage('')
 
     try {
-      const { error } = await supabase
+      const fullName = `${firstName} ${lastName}`.trim()
+      
+      // Update the user's metadata with the new name
+      const { data: userData, error: updateUserError } = await supabase.auth.updateUser({
+        data: { first_name: firstName, full_name: fullName }
+      })
+
+      if (updateUserError) {
+        console.error('Error updating user metadata:', updateUserError)
+        throw updateUserError
+      }
+
+      // Update the profile in the database
+      const { data: profileData, error: updateProfileError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
-          full_name: profile.full_name,
+          full_name: fullName,
           phone: profile.phone,
           updated_at: new Date().toISOString()
         })
+        .select()
 
-      if (error) throw error
+      if (updateProfileError) {
+        console.error('Error updating profile:', updateProfileError)
+        throw updateProfileError
+      }
 
+      // If we get here, both updates were successful
       setMessage('Profile updated successfully!')
+      
+      // Refresh the profile data
+      await loadUserProfile()
     } catch (error) {
-      console.error('Error updating profile:', error)
-      setMessage('Error updating profile. Please try again.')
+      console.error('Error in saveProfile:', error)
+      // Only show error message if we haven't already shown a success message
+      if (!message.includes('successfully')) {
+        setMessage('Error updating profile. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -224,7 +259,33 @@ const SettingsPage = () => {
               <h2 className="text-xl font-semibold text-dad-dark">Profile Information</h2>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-dad-dark mb-1">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full px-4 py-2 border border-dad-olive rounded-lg focus:ring-2 focus:ring-dad-olive focus:border-transparent"
+                  placeholder="Enter your first name"
+                />
+              </div>
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-dad-dark mb-1">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full px-4 py-2 border border-dad-olive rounded-lg focus:ring-2 focus:ring-dad-olive focus:border-transparent"
+                  placeholder="Enter your last name"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-dad-dark mb-1">
                   Email Address
@@ -236,19 +297,6 @@ const SettingsPage = () => {
                   className="w-full px-3 py-2 border border-dad-blue-gray rounded-md bg-gray-50 text-gray-500"
                 />
                 <p className="text-xs text-dad-olive mt-1">Email cannot be changed</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-dad-dark mb-1">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={profile.full_name}
-                  onChange={(e) => setProfile({...profile, full_name: e.target.value})}
-                  className="w-full px-3 py-2 border border-dad-blue-gray rounded-md focus:ring-2 focus:ring-dad-olive focus:border-transparent"
-                  placeholder="Enter your full name"
-                />
               </div>
               
               <div>
