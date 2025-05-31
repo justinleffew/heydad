@@ -20,6 +20,10 @@
 }
 
 @layer components {
+  .settings-header {
+    padding: 0 20px;
+  }
+
   .card-legacy {
     @apply bg-dad-white border border-dad-blue-gray rounded-2xl shadow-soft hover:shadow-medium transition-all duration-300;
   }

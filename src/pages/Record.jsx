@@ -147,14 +147,14 @@ const Record = () => {
       try {
         const randomPrompts = getRandomPromptsFromCategory(selectedCategory.id)
         if (!randomPrompts || randomPrompts.length === 0) {
-          setError('No prompts found for this category. Please try another category.')
+          setError('No ideas found for this category. Please try another category.')
           return
         }
         setCurrentPrompts(randomPrompts)
         setError('')
       } catch (error) {
-        console.error('Error refreshing prompts:', error)
-        setError('Failed to refresh prompts. Please try again.')
+        console.error('Error refreshing ideas:', error)
+        setError('Failed to refresh ideas. Please try again.')
       }
     }
   }
@@ -460,7 +460,8 @@ const Record = () => {
         unlock_date: unlockType === 'date' ? unlockDate : null,
         unlock_milestone: unlockType === 'milestone' ? unlockMilestone.trim() : null,
         processing_status: 'processing',
-        processing_progress: 80
+        processing_progress: 80,
+        duration: Math.round(recordedBlob.size / (recordedBlob.size / (recordingTime || 0))) // Calculate duration in seconds
       }
 
       const { data: video, error: videoError } = await supabase

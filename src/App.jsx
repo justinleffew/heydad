@@ -10,7 +10,7 @@ import Videos from './pages/Videos'
 import Children from './pages/Children'
 import Settings from './pages/Settings'
 import About from './pages/About'
-import Prompts from './pages/Prompts'
+import Ideas from './pages/Ideas'
 import { testConnection } from './lib/supabase'
 
 function App() {
@@ -45,9 +45,9 @@ function App() {
               <Children />
             </ProtectedRoute>
           } />
-          <Route path="/prompts" element={
+          <Route path="/ideas" element={
             <ProtectedRoute>
-              <Prompts />
+              <Ideas />
             </ProtectedRoute>
           } />
           <Route path="/settings" element={

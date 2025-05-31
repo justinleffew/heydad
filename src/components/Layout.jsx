@@ -170,15 +170,15 @@ const Layout = ({ children }) => {
               </Link>
               
               <Link
-                to="/prompts"
-                className={`flex items-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
-                  isActive('/prompts')
-                    ? 'bg-dad-white bg-opacity-20 text-dad-white shadow-soft'
-                    : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                to="/ideas"
+                className={`flex items-center px-4 py-2 rounded-lg transition-colors duration-200 ${
+                  isActive('/ideas')
+                    ? 'bg-dad-accent text-white'
+                    : 'text-dad-dark hover:bg-dad-warm'
                 }`}
               >
-                <Lightbulb className="w-4 h-4 mr-2" />
-                Prompts
+                <Lightbulb className="w-5 h-5 mr-3" />
+                Ideas
               </Link>
               
               <Link
@@ -276,16 +276,16 @@ const Layout = ({ children }) => {
                   </Link>
                   
                   <Link
-                    to="/prompts"
+                    to="/ideas"
                     onClick={closeMobileMenu}
                     className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold transition-all duration-300 ${
-                      isActive('/prompts')
+                      isActive('/ideas')
                         ? 'bg-dad-white bg-opacity-20 text-dad-white'
                         : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
                     }`}
                   >
                     <Lightbulb className="w-5 h-5 mr-3" />
-                    Prompts
+                    Ideas
                   </Link>
                   
                   <Link

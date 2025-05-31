@@ -221,9 +221,9 @@ const Dashboard = () => {
       }
     } else if (video.processing_status === 'processing') {
       return {
-        icon: <Clock className="w-4 h-4 text-dad-olive animate-spin" />,
+        icon: <Clock className="w-4 h-4 text-[#f67865] animate-spin" />,
         text: `Processing: ${video.processing_progress}%`,
-        color: 'text-dad-olive'
+        color: 'text-[#f67865]'
       }
     } else if (video.processing_status === 'failed') {
       return {
@@ -367,11 +367,11 @@ const Dashboard = () => {
             <div className="flex items-center justify-center">
               <div className="flex items-center justify-center space-x-16">
                 <div className="flex items-center">
-                  <Heart className="w-5 h-5 mr-2" style={{ color: '#ffba08' }} />
+                  <Heart className="w-5 h-5 mr-2" style={{ color: '#f67865' }} />
                   <span className="text-lg font-medium">{stats.totalVideos} {stats.totalVideos === 1 ? 'memory' : 'memories'}</span>
                 </div>
                 <div className="flex items-center">
-                  <Timer className="w-5 h-5 mr-2" style={{ color: '#ffba08' }} />
+                  <Timer className="w-5 h-5 mr-2" style={{ color: '#f67865' }} />
                   <span className="text-lg font-medium">{stats.totalMinutesRecorded} mins recorded</span>
                 </div>
               </div>
@@ -386,7 +386,7 @@ const Dashboard = () => {
               <h1 className="text-3xl sm:text-4xl font-heading font-bold text-white mb-4">
                 Create a Memory for Your Children
               </h1>
-              <p className="text-[#ffba08] text-opacity-90 mb-6 max-w-2xl">
+              <p className="text-[#f67865] text-opacity-90 mb-6 max-w-2xl">
                 Record a video message your children will cherish forever. Tap to start recording now.
               </p>
               <div className="flex items-center justify-between">
@@ -433,10 +433,10 @@ const Dashboard = () => {
           {videos.length === 0 ? (
             <div className="card-legacy p-10 text-center">
               <div className="bg-dad-olive bg-opacity-10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Video className="w-10 h-10 text-dad-olive" />
+                <Video className="w-10 h-10 text-[#f67865]" />
               </div>
               <h3 className="text-xl font-heading font-bold text-legacy mb-3">No videos created yet</h3>
-              <p className="text-dad-olive font-medium mb-6">
+              <p className="text-[#f67865] font-medium mb-6">
                 Start recording your first legacy video for your children
               </p>
               <Link
@@ -477,7 +477,7 @@ const Dashboard = () => {
                           ) : (
                             <div className="w-full h-full bg-gradient-subtle flex items-center justify-center">
                               <div className="bg-dad-white bg-opacity-80 p-4 rounded-2xl shadow-soft">
-                                <Video className="w-10 h-10 text-dad-olive" />
+                                <Video className="w-10 h-10 text-[#f67865]" />
                               </div>
                             </div>
                           )}
@@ -498,7 +498,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                         
-                        <div className="flex flex-col text-sm text-dad-olive space-y-2 mb-4">
+                        <div className="flex flex-col text-sm text-dad-dark space-y-2 mb-4">
                           <span className="flex items-center font-medium">
                             <Calendar className="w-4 h-4 mr-2" />
                             {new Date(video.created_at).toLocaleDateString()}
@@ -521,7 +521,7 @@ const Dashboard = () => {
                           
                           <button
                             disabled
-                            className="p-2 text-dad-olive hover:text-dad-dark transition-colors duration-300"
+                            className="p-2 text-[#f67865] hover:text-dad-dark transition-colors duration-300"
                             title="Coming soon - Share with Mom"
                           >
                             <Share className="w-5 h-5" />
@@ -543,7 +543,7 @@ const Dashboard = () => {
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center text-sm text-dad-olive space-x-6">
+                        <div className="flex items-center text-sm text-dad-dark space-x-6">
                           <span className="flex items-center font-medium">
                             <Calendar className="w-4 h-4 mr-2" />
                             {new Date(video.created_at).toLocaleDateString()}
@@ -566,7 +566,7 @@ const Dashboard = () => {
                           
                           <button
                             disabled
-                            className="p-2 text-dad-olive hover:text-dad-dark transition-colors duration-300"
+                            className="p-2 text-[#f67865] hover:text-dad-dark transition-colors duration-300"
                             title="Coming soon - Share with Mom"
                           >
                             <Share className="w-5 h-5" />
@@ -589,7 +589,7 @@ const Dashboard = () => {
                       ) : (
                         <div className="w-full h-full bg-gradient-subtle flex items-center justify-center">
                           <div className="bg-dad-white bg-opacity-80 p-4 rounded-2xl shadow-soft">
-                            <Video className="w-8 h-8 text-dad-olive" />
+                            <Video className="w-8 h-8 text-[#f67865]" />
                           </div>
                         </div>
                       )}
@@ -617,7 +617,7 @@ const Dashboard = () => {
                 <div className="text-center">
                   <Link
                     to="/videos"
-                    className="text-dad-dark hover:text-dad-olive font-heading font-bold text-lg transition-colors duration-300"
+                    className="text-dad-dark hover:text-[#f67865] font-heading font-bold text-lg transition-colors duration-300"
                   >
                     View all {videos.length} videos →
                   </Link>

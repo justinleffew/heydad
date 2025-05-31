@@ -4,7 +4,7 @@ import Layout from '../components/Layout'
 import { VIDEO_PROMPTS, getAllCategories, getPromptsByCategory } from '../data/prompts'
 import { Search, Lightbulb, Video, ArrowRight, Heart, Briefcase, GraduationCap, Target, Users, Film, Star, BookOpen, Clock } from 'lucide-react'
 
-const Prompts = () => {
+const Ideas = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [displayedPrompts, setDisplayedPrompts] = useState([])
@@ -27,14 +27,22 @@ const Prompts = () => {
   useEffect(() => {
     const allCategories = getAllCategories()
     setCategories(allCategories)
-    setDisplayedPrompts(VIDEO_PROMPTS)
+    // Don't show any prompts by default
+    setDisplayedPrompts([])
   }, [])
 
   const handleSearch = (term) => {
     setSearchTerm(term)
     if (term.trim() === '') {
-      setDisplayedPrompts(selectedCategory ? getPromptsByCategory(selectedCategory.id) : VIDEO_PROMPTS)
+      // If no search term and no category selected, show no prompts
+      if (!selectedCategory) {
+        setDisplayedPrompts([])
+        return
+      }
+      // If category selected, show its prompts
+      setDisplayedPrompts(getPromptsByCategory(selectedCategory.id))
     } else {
+      // Search within selected category or all prompts if no category selected
       const promptsToSearch = selectedCategory ? getPromptsByCategory(selectedCategory.id) : VIDEO_PROMPTS
       const filtered = promptsToSearch.filter(prompt =>
         prompt.toLowerCase().includes(term.toLowerCase())
@@ -52,7 +60,7 @@ const Prompts = () => {
 
   const clearCategory = () => {
     setSelectedCategory(null)
-    setDisplayedPrompts(VIDEO_PROMPTS)
+    setDisplayedPrompts([])
     setSearchTerm('')
   }
 
@@ -66,10 +74,10 @@ const Prompts = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-dad-dark flex items-center">
             <Lightbulb className="w-8 h-8 mr-3 text-dad-accent" />
-            Video Ideas & Prompts
+            Video Ideas
           </h1>
           <p className="mt-2 text-dad-olive">
-            Get inspired with thoughtful prompts for your legacy videos. Click on any prompt to start recording!
+            Select a category to see ideas, or search for specific ones. Click on any idea to start recording!
           </p>
         </div>
 
@@ -80,35 +88,35 @@ const Prompts = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dad-blue-gray w-5 h-5" />
             <input
               type="text"
-              placeholder="Search prompts..."
+              placeholder="Search ideas..."
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-dad-blue-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-dad-dark focus:border-dad-dark"
             />
           </div>
 
-          {/* Category Selection */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Category Buttons */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {selectedCategory ? (
               <button
                 onClick={clearCategory}
-                className="col-span-2 flex items-center justify-center px-4 py-3 bg-dad-accent text-white rounded-lg hover:bg-dad-dark transition-all duration-300"
+                className="col-span-full flex items-center justify-center px-4 py-3 bg-dad-accent text-white rounded-lg hover:bg-dad-dark transition-all duration-300"
               >
                 <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
-                Back to All Categories
+                Back to Categories
               </button>
             ) : (
               categories.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => selectCategory(category)}
-                  className="flex items-center px-4 py-3 bg-dad-warm hover:bg-dad-blue-gray hover:bg-opacity-20 rounded-lg transition-all duration-300 border border-transparent hover:border-dad-accent"
+                  className="flex items-center justify-center px-6 py-5 bg-dad-warm hover:bg-dad-blue-gray hover:bg-opacity-20 rounded-lg transition-all duration-300 border-2 border-dad-dark h-[96px]"
                 >
-                  <div className="flex items-center w-full">
-                    <div className="bg-dad-accent bg-opacity-20 p-2 rounded-lg mr-3 flex-shrink-0">
-                      {React.createElement(icons[category.icon], { className: "w-4 h-4 text-dad-accent" })}
+                  <div className="flex flex-col items-center text-center">
+                    <div className="bg-dad-accent bg-opacity-20 p-3 rounded-lg mb-2">
+                      {React.createElement(icons[category.icon], { className: "w-6 h-6 text-dad-accent" })}
                     </div>
-                    <span className="text-dad-dark font-medium text-sm text-left">{category.name}</span>
+                    <span className="text-dad-dark font-medium text-sm">{category.name}</span>
                   </div>
                 </button>
               ))
@@ -116,35 +124,38 @@ const Prompts = () => {
           </div>
         </div>
 
-        {/* Section Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-dad-dark flex items-center">
-            <Lightbulb className="w-6 h-6 mr-2 text-dad-accent" />
-            Browse Video Ideas
-          </h2>
-          <p className="mt-1 text-dad-olive text-sm">
-            {selectedCategory ? `Showing ideas from ${selectedCategory.name}` : 'Showing all video ideas'}
-          </p>
-        </div>
-
-        {/* Prompts Grid */}
-        <div className="grid gap-4 md:gap-6">
-          {displayedPrompts.length === 0 ? (
-            <div className="text-center py-12">
-              <Lightbulb className="w-16 h-16 text-dad-blue-gray mx-auto mb-4 opacity-50" />
-              <p className="text-dad-olive text-lg">No prompts found matching your search.</p>
-              <button
-                onClick={() => {
-                  setSearchTerm('')
-                  handleSearch('')
-                }}
-                className="mt-4 text-dad-dark hover:text-dad-olive font-medium"
-              >
-                Clear search
-              </button>
-            </div>
-          ) : (
-            displayedPrompts.map((prompt, index) => (
+        {/* Ideas Grid */}
+        {displayedPrompts.length === 0 ? (
+          <div className="text-center py-12">
+            {selectedCategory ? (
+              <>
+                <Lightbulb className="w-16 h-16 text-dad-blue-gray mx-auto mb-4 opacity-50" />
+                <p className="text-dad-olive text-lg">No ideas found in this category.</p>
+              </>
+            ) : searchTerm ? (
+              <>
+                <Lightbulb className="w-16 h-16 text-dad-blue-gray mx-auto mb-4 opacity-50" />
+                <p className="text-dad-olive text-lg">No ideas found matching your search.</p>
+                <button
+                  onClick={() => {
+                    setSearchTerm('')
+                    handleSearch('')
+                  }}
+                  className="mt-4 text-dad-dark hover:text-dad-olive font-medium"
+                >
+                  Clear search
+                </button>
+              </>
+            ) : (
+              <>
+                <Lightbulb className="w-16 h-16 text-dad-blue-gray mx-auto mb-4 opacity-50" />
+                <p className="text-dad-olive text-lg">Select a category to see ideas</p>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:gap-6">
+            {displayedPrompts.map((prompt, index) => (
               <div
                 key={index}
                 className="bg-white border border-dad-blue-gray rounded-lg p-6 hover:shadow-soft transition-all duration-300 group cursor-pointer"
@@ -171,9 +182,9 @@ const Prompts = () => {
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Quick Action */}
         <div className="mt-12 text-center">
@@ -196,4 +207,4 @@ const Prompts = () => {
   )
 }
 
-export default Prompts 
+export default Ideas 
