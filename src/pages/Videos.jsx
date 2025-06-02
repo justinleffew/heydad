@@ -344,7 +344,7 @@ const Videos = () => {
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-[30px] font-bold text-dad-dark opacity-90">Your Memories</h1>
-              <p className="mt-2 text-[#f67865] opacity-60 leading-tight">
+              <p className="mt-2 text-dad-dark opacity-60 leading-tight">
                 All the memories you've created for your children.
               </p>
             </div>
@@ -353,7 +353,7 @@ const Videos = () => {
               <div className="hidden sm:flex items-center space-x-6">
                 <button
                   onClick={() => setShowMobileFilter(true)}
-                  className="flex items-center px-6 h-10 rounded-lg text-sm font-medium bg-dad-dark text-white hover:bg-[#3A4F6A] transition-all duration-300"
+                  className="flex items-center justify-center px-6 h-10 rounded-lg text-sm font-medium bg-dad-dark text-white hover:bg-[#3A4F6A] transition-all duration-300 whitespace-nowrap"
                 >
                   <Search className="w-4 h-4 mr-2" />
                   Search & Filter
@@ -362,7 +362,7 @@ const Videos = () => {
                 {/* Capture Moment Button */}
                 <a
                   href="/record"
-                  className="flex items-center px-6 h-10 rounded-lg text-sm font-medium bg-[#f67865] text-white hover:bg-[#ff8a77] transition-all duration-300"
+                  className="flex items-center justify-center px-6 h-10 rounded-lg text-sm font-medium bg-[#FF9651] text-white hover:bg-[#ff8a77] transition-all duration-300 whitespace-nowrap"
                 >
                   <Camera className="w-4 h-4 mr-2" />
                   Capture a Moment
@@ -373,14 +373,14 @@ const Videos = () => {
               <div className="sm:hidden flex flex-col space-y-2">
                 <button
                   onClick={() => setShowMobileSearch(true)}
-                  className="flex items-center px-6 h-10 rounded-lg text-sm font-medium bg-dad-dark text-white hover:bg-[#3A4F6A] transition-all duration-300"
+                  className="flex items-center justify-center px-6 h-10 rounded-lg text-sm font-medium bg-dad-dark text-white hover:bg-[#3A4F6A] transition-all duration-300 whitespace-nowrap"
                 >
                   <Search className="w-4 h-4 mr-2" />
                   Search & Filter
                 </button>
                 <a
                   href="/record"
-                  className="flex items-center px-6 h-10 rounded-lg text-sm font-medium bg-[#f67865] text-white hover:bg-[#ff8a77] transition-all duration-300"
+                  className="flex items-center justify-center px-6 h-10 rounded-lg text-sm font-medium bg-[#FF9651] text-white hover:bg-[#ff8a77] transition-all duration-300 whitespace-nowrap"
                 >
                   <Camera className="w-4 h-4 mr-2" />
                   Capture a Moment
@@ -418,7 +418,7 @@ const Videos = () => {
                     // TODO: Implement search functionality
                   }}
                 />
-                <Search className="w-4 h-4 text-[#f67865] absolute left-2.5 top-1/2 transform -translate-y-1/2" />
+                <Search className="w-4 h-4 text-[#FF9651] absolute left-2.5 top-1/2 transform -translate-y-1/2" />
               </div>
 
               {/* Status Filter */}
@@ -427,31 +427,31 @@ const Videos = () => {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => setStatusFilter('all')}
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${
+                    className={`flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium ${
                       statusFilter === 'all'
                         ? 'bg-dad-dark text-white'
-                        : 'bg-white text-[#f67865] hover:bg-[#f67865] hover:text-white'
-                    }`}
+                        : 'bg-white text-[#FF9651] hover:bg-[#FF9651] hover:text-white'
+                    } whitespace-nowrap`}
                   >
                     All
                   </button>
                   <button
                     onClick={() => setStatusFilter('unlocked')}
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${
+                    className={`flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium ${
                       statusFilter === 'unlocked'
                         ? 'bg-dad-dark text-white'
-                        : 'bg-white text-[#f67865] hover:bg-[#f67865] hover:text-white'
-                    }`}
+                        : 'bg-white text-[#FF9651] hover:bg-[#FF9651] hover:text-white'
+                    } whitespace-nowrap`}
                   >
                     Available
                   </button>
                   <button
                     onClick={() => setStatusFilter('locked')}
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium ${
+                    className={`flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium ${
                       statusFilter === 'locked'
                         ? 'bg-dad-dark text-white'
-                        : 'bg-white text-[#f67865] hover:bg-[#f67865] hover:text-white'
-                    }`}
+                        : 'bg-white text-[#FF9651] hover:bg-[#FF9651] hover:text-white'
+                    } whitespace-nowrap`}
                   >
                     Locked
                   </button>
@@ -467,11 +467,11 @@ const Videos = () => {
                       setChildFilter('all')
                       setShowMobileSearch(false)
                     }}
-                    className={`w-full px-3 py-2 rounded-lg text-sm font-medium text-left ${
+                    className={`w-full flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium ${
                       childFilter === 'all'
                         ? 'bg-dad-dark text-white'
-                        : 'bg-white text-[#f67865] hover:bg-[#f67865] hover:text-white'
-                    }`}
+                        : 'bg-white text-[#FF9651] hover:bg-[#FF9651] hover:text-white'
+                    } whitespace-nowrap`}
                   >
                     All Children
                   </button>
@@ -483,17 +483,17 @@ const Videos = () => {
                           setChildFilter(child.id)
                           setShowMobileSearch(false)
                         }}
-                        className={`w-full px-3 py-2 rounded-lg text-sm font-medium text-left ${
+                        className={`w-full flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium ${
                           childFilter === child.id
                             ? 'bg-dad-dark text-white'
-                            : 'bg-white text-[#f67865] hover:bg-[#f67865] hover:text-white'
-                        }`}
+                            : 'bg-white text-[#FF9651] hover:bg-[#FF9651] hover:text-white'
+                        } whitespace-nowrap`}
                       >
                         {child.name}
                       </button>
                     ))
                   ) : (
-                    <span className="text-sm text-[#f67865]">No children found</span>
+                    <span className="text-sm text-dad-dark">No children found</span>
                   )}
                 </div>
               </div>
@@ -506,7 +506,7 @@ const Videos = () => {
                     setSortBy(sortBy === 'newest' ? 'oldest' : 'newest')
                     setShowMobileSearch(false)
                   }}
-                  className="w-full px-3 py-2 rounded-lg text-sm font-medium bg-white text-[#f67865] hover:bg-[#f67865] hover:text-white"
+                  className="w-full flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium bg-white text-[#FF9651] hover:bg-[#FF9651] hover:text-white whitespace-nowrap"
                 >
                   {sortBy === 'newest' ? 'Newest First' : 'Oldest First'}
                 </button>
@@ -516,7 +516,7 @@ const Videos = () => {
               <div className="mt-4">
                 <a
                   href="/record"
-                  className="flex items-center justify-center w-full px-6 h-10 rounded-lg text-sm font-medium bg-dad-dark text-white hover:bg-[#3A4F6A] transition-all duration-300"
+                  className="flex items-center justify-center w-full px-6 h-10 rounded-lg text-sm font-medium bg-dad-dark text-white hover:bg-[#3A4F6A] transition-all duration-300 whitespace-nowrap"
                 >
                   <Camera className="w-4 h-4 mr-2" />
                   Capture a Moment
@@ -589,8 +589,8 @@ const Videos = () => {
 
                   {/* Video Info */}
                   <div className="p-4">
-                    <h3 className="text-lg font-semibold text-dad-dark">{video.title}</h3>
-                    <div className="flex items-center text-sm text-[#f67865] space-x-4 mt-2">
+                    <h3 className="text-xl font-heading font-bold text-dad-dark mb-2">{video.title || 'Untitled Memory'}</h3>
+                    <div className="flex items-center text-sm text-dad-dark space-x-4 mt-2">
                       <span className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1.5" />
                         {new Date(video.created_at).toLocaleDateString()}
@@ -611,7 +611,7 @@ const Videos = () => {
         {upcomingUnlocks.length > 0 && (
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-dad-dark mb-4 flex items-center">
-              <Gift className="w-5 h-5 mr-2 text-[#f67865]" />
+              <Gift className="w-5 h-5 mr-2 text-[#FF9651]" />
               Upcoming Unlocks
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -629,7 +629,7 @@ const Videos = () => {
                         <span>Unlocks in {daysUntilUnlock} days</span>
                       </div>
                     </div>
-                    <div className="flex items-center text-sm text-[#f67865]">
+                    <div className="flex items-center text-sm text-dad-dark">
                       <Calendar className="w-3 h-3 mr-1" />
                       {unlockDate.toLocaleDateString()}
                     </div>
@@ -645,10 +645,10 @@ const Videos = () => {
           <div className="bg-dad-blue-gray bg-opacity-20 p-12 rounded-lg text-center">
             <div className="w-32 h-32 mx-auto mb-6 relative">
               <div className="absolute inset-0 bg-dad-dark rounded-full opacity-10"></div>
-              <Camera className="w-16 h-16 text-[#f67865] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+              <Camera className="w-16 h-16 text-[#FF9651] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
             </div>
             <h3 className="text-xl font-semibold text-dad-dark mb-2">Start Your First Memory</h3>
-            <p className="text-[#f67865] mb-6 max-w-md mx-auto">
+            <p className="text-dad-dark mb-6 max-w-md mx-auto">
               Create a special moment for your children to discover later. Record a video message, share your wisdom, or capture a milestone.
             </p>
             <a
@@ -722,8 +722,8 @@ const Videos = () => {
 
                     {/* Video Info */}
                     <div>
-                      <h3 className="text-lg font-semibold text-dad-dark mb-2">{video.title}</h3>
-                      <div className="flex items-center text-sm text-[#f67865] space-x-4">
+                      <h3 className="text-xl font-heading font-bold text-dad-dark mb-2">{video.title || 'Untitled Memory'}</h3>
+                      <div className="flex items-center text-sm text-dad-dark space-x-4">
                         <span className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1.5" />
                           {new Date(video.created_at).toLocaleDateString()}
@@ -781,17 +781,17 @@ const Videos = () => {
               </button>
             </div>
             <div className="prose prose-dad max-w-none">
-              <p className="text-[#f67865]">
+              <p className="text-dad-dark">
                 AI Dad is an experimental feature that aims to create a digital version of your parenting style and memories. As you record more videos, your personal AI learns from your content to create meaningful interactions for your children in the future regardless of where you are.
               </p>
-              <p className="text-[#f67865] mt-2">
+              <p className="text-dad-dark mt-2">
                 Creepy? Maybe. Cool? Definitely. 100% opt-in once it's built.
               </p>
               <div className="mt-4 p-4 bg-dad-blue-gray bg-opacity-20 rounded-lg">
                 <h3 className="text-lg font-semibold text-dad-dark mb-2">Current Progress</h3>
                 <div className="flex items-center space-x-4">
                   <div className="flex-1">
-                    <div className="text-sm text-[#f67865] mb-1">Total Minutes Recorded</div>
+                    <div className="text-sm text-dad-dark mb-1">Total Minutes Recorded</div>
                     <div className="text-2xl font-bold text-dad-dark">
                       {Math.round(videos.length * 2)} / 600 minutes
                     </div>

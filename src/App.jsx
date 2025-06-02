@@ -11,6 +11,8 @@ import Children from './pages/Children'
 import Settings from './pages/Settings'
 import About from './pages/About'
 import Ideas from './pages/Ideas'
+import PricingPage from './components/PricingPage'
+import SuccessPage from './components/SuccessPage'
 import { testConnection } from './lib/supabase'
 
 function App() {
@@ -25,6 +27,8 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/success" element={<SuccessPage />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />

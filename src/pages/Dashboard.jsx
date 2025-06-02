@@ -221,9 +221,9 @@ const Dashboard = () => {
       }
     } else if (video.processing_status === 'processing') {
       return {
-        icon: <Clock className="w-4 h-4 text-[#f67865] animate-spin" />,
+        icon: <Clock className="w-4 h-4 text-[#FF9651] animate-spin" />,
         text: `Processing: ${video.processing_progress}%`,
-        color: 'text-[#f67865]'
+        color: 'text-[#FF9651]'
       }
     } else if (video.processing_status === 'failed') {
       return {
@@ -367,11 +367,11 @@ const Dashboard = () => {
             <div className="flex items-center justify-center">
               <div className="flex items-center justify-center space-x-16">
                 <div className="flex items-center">
-                  <Heart className="w-5 h-5 mr-2" style={{ color: '#f67865' }} />
+                  <Heart className="w-5 h-5 mr-2" style={{ color: '#FF9651' }} />
                   <span className="text-lg font-medium">{stats.totalVideos} {stats.totalVideos === 1 ? 'memory' : 'memories'}</span>
                 </div>
                 <div className="flex items-center">
-                  <Timer className="w-5 h-5 mr-2" style={{ color: '#f67865' }} />
+                  <Timer className="w-5 h-5 mr-2" style={{ color: '#FF9651' }} />
                   <span className="text-lg font-medium">{stats.totalMinutesRecorded} mins recorded</span>
                 </div>
               </div>
@@ -386,7 +386,7 @@ const Dashboard = () => {
               <h1 className="text-3xl sm:text-4xl font-heading font-bold text-white mb-4">
                 Create a Memory for Your Children
               </h1>
-              <p className="text-[#f67865] text-opacity-90 mb-6 max-w-2xl">
+              <p className="text-[#FF9651] text-opacity-90 mb-6 max-w-2xl">
                 Record a video message your children will cherish forever. Tap to start recording now.
               </p>
               <div className="flex items-center justify-between">
@@ -433,10 +433,10 @@ const Dashboard = () => {
           {videos.length === 0 ? (
             <div className="card-legacy p-10 text-center">
               <div className="bg-dad-olive bg-opacity-10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Video className="w-10 h-10 text-[#f67865]" />
+                <Video className="w-10 h-10 text-[#FF9651]" />
               </div>
               <h3 className="text-xl font-heading font-bold text-legacy mb-3">No videos created yet</h3>
-              <p className="text-[#f67865] font-medium mb-6">
+              <p className="text-[#FF9651] font-medium mb-6">
                 Start recording your first legacy video for your children
               </p>
               <Link
@@ -456,12 +456,10 @@ const Dashboard = () => {
                     <div className="relative">
                       {/* Content - Enhanced */}
                       <div className="p-6">
-                        {/* Transcript Snippet - Enhanced */}
-                        <div className="bg-dad-warm border-l-4 border-dad-gold p-4 rounded-r-xl mb-4 shadow-inner-soft">
-                          <p className="text-dad-dark italic font-medium text-lg leading-relaxed">
-                            "{getTranscriptSnippet(video)}"
-                          </p>
-                        </div>
+                        {/* Video Title - Enhanced */}
+                        <h3 className="text-xl font-heading font-bold text-dad-dark mb-4">
+                          {video.title || 'Untitled Memory'}
+                        </h3>
 
                         {/* Video Thumbnail - Enhanced */}
                         <div 
@@ -477,7 +475,7 @@ const Dashboard = () => {
                           ) : (
                             <div className="w-full h-full bg-gradient-subtle flex items-center justify-center">
                               <div className="bg-dad-white bg-opacity-80 p-4 rounded-2xl shadow-soft">
-                                <Video className="w-10 h-10 text-[#f67865]" />
+                                <Video className="w-10 h-10 text-[#FF9651]" />
                               </div>
                             </div>
                           )}
@@ -521,7 +519,7 @@ const Dashboard = () => {
                           
                           <button
                             disabled
-                            className="p-2 text-[#f67865] hover:text-dad-dark transition-colors duration-300"
+                            className="p-2 text-[#FF9651] hover:text-dad-dark transition-colors duration-300"
                             title="Coming soon - Share with Mom"
                           >
                             <Share className="w-5 h-5" />
@@ -535,12 +533,10 @@ const Dashboard = () => {
                   <div className="hidden md:flex">
                     {/* Content - Enhanced */}
                     <div className="flex-1 p-8">
-                      {/* Transcript Snippet - Enhanced */}
-                      <div className="bg-dad-warm border-l-4 border-dad-gold p-6 rounded-r-xl mb-6 shadow-inner-soft">
-                        <p className="text-dad-dark italic font-medium text-xl leading-relaxed">
-                          "{getTranscriptSnippet(video)}"
-                        </p>
-                      </div>
+                      {/* Video Title - Enhanced */}
+                      <h3 className="text-2xl font-heading font-bold text-dad-dark mb-6">
+                        {video.title || 'Untitled Memory'}
+                      </h3>
                       
                       <div className="flex items-center justify-between">
                         <div className="flex items-center text-sm text-dad-dark space-x-6">
@@ -566,7 +562,7 @@ const Dashboard = () => {
                           
                           <button
                             disabled
-                            className="p-2 text-[#f67865] hover:text-dad-dark transition-colors duration-300"
+                            className="p-2 text-[#FF9651] hover:text-dad-dark transition-colors duration-300"
                             title="Coming soon - Share with Mom"
                           >
                             <Share className="w-5 h-5" />
@@ -589,7 +585,7 @@ const Dashboard = () => {
                       ) : (
                         <div className="w-full h-full bg-gradient-subtle flex items-center justify-center">
                           <div className="bg-dad-white bg-opacity-80 p-4 rounded-2xl shadow-soft">
-                            <Video className="w-8 h-8 text-[#f67865]" />
+                            <Video className="w-8 h-8 text-[#FF9651]" />
                           </div>
                         </div>
                       )}
@@ -617,7 +613,7 @@ const Dashboard = () => {
                 <div className="text-center">
                   <Link
                     to="/videos"
-                    className="text-dad-dark hover:text-[#f67865] font-heading font-bold text-lg transition-colors duration-300"
+                    className="text-dad-dark hover:text-[#FF9651] font-heading font-bold text-lg transition-colors duration-300"
                   >
                     View all {videos.length} videos →
                   </Link>

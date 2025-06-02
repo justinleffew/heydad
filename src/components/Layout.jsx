@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { LogOut, Video, Home, Users, Plus, Menu, X, Settings, Info, Bell, Lightbulb } from 'lucide-react'
+import { LogOut, Video, Home, Users, Plus, Menu, X, Settings, Info, Bell, Lightbulb, CreditCard } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const Layout = ({ children }) => {
@@ -205,6 +205,18 @@ const Layout = ({ children }) => {
                 About
               </Link>
               
+              <Link
+                to="/pricing"
+                className={`flex items-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  isActive('/pricing')
+                    ? 'bg-dad-white bg-opacity-20 text-dad-white shadow-soft'
+                    : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                }`}
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Pricing
+              </Link>
+              
               <button
                 onClick={handleSignOut}
                 className="flex items-center px-4 py-2 rounded-xl text-sm font-semibold text-dad-blue-gray hover:text-dad-white hover:bg-dad-accent hover:bg-opacity-80 transition-all duration-300 ml-2"
@@ -312,6 +324,19 @@ const Layout = ({ children }) => {
                   >
                     <Info className="w-5 h-5 mr-3" />
                     About
+                  </Link>
+                  
+                  <Link
+                    to="/pricing"
+                    onClick={closeMobileMenu}
+                    className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold transition-all duration-300 ${
+                      isActive('/pricing')
+                        ? 'bg-dad-white bg-opacity-20 text-dad-white'
+                        : 'text-dad-blue-gray hover:text-dad-white hover:bg-dad-white hover:bg-opacity-10'
+                    }`}
+                  >
+                    <CreditCard className="w-5 h-5 mr-3" />
+                    Pricing
                   </Link>
                   
                   <button
