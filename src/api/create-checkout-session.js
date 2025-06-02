@@ -1,10 +1,14 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe(import.meta.env.VITE_STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.VITE_STRIPE_SECRET_KEY);
 
-export async function POST(request) {
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
-    const { priceId, interval, isGuest, guestEmail } = await request.json();
+    const { priceId, interval, isGuest, guestEmail } = req.body;
 
     // Create a checkout session
     const session = await stripe.checkout.sessions.create({
@@ -16,8 +20,8 @@ export async function POST(request) {
         },
       ],
       mode: 'subscription',
-      success_url: `${import.meta.env.VITE_APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${import.meta.env.VITE_APP_URL}/pricing`,
+      success_url: `${process.env.VITE_APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.VITE_APP_URL}/pricing`,
       customer_email: isGuest ? guestEmail : undefined,
       metadata: {
         isGuest: isGuest ? 'true' : 'false',
@@ -25,19 +29,9 @@ export async function POST(request) {
       },
     });
 
-    return new Response(JSON.stringify({ id: session.id }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    res.status(200).json({ id: session.id });
   } catch (error) {
     console.error('Error creating checkout session:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    res.status(500).json({ error: error.message });
   }
 } 

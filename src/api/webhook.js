@@ -1,72 +1,52 @@
 import Stripe from 'stripe';
-import { supabase } from '../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(import.meta.env.VITE_STRIPE_SECRET_KEY);
-const webhookSecret = import.meta.env.VITE_STRIPE_WEBHOOK_SECRET;
+const stripe = new Stripe(process.env.VITE_STRIPE_SECRET_KEY);
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.VITE_SUPABASE_ANON_KEY
+);
 
-export async function POST(request) {
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const sig = req.headers['stripe-signature'];
+  let event;
+
   try {
-    const body = await request.text();
-    const signature = request.headers.get('stripe-signature');
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.VITE_STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).json({ error: 'Webhook signature verification failed' });
+  }
 
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    } catch (err) {
-      console.error('Webhook signature verification failed:', err.message);
-      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Handle the event
+  try {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
-        
-        // Create or update user subscription in Supabase
-        const { data: subscription, error } = await supabase
+        const { customer, subscription, metadata } = session;
+
+        // Update user's subscription status in Supabase
+        const { error } = await supabase
           .from('subscriptions')
           .upsert({
             user_id: session.client_reference_id,
-            stripe_customer_id: session.customer,
-            stripe_subscription_id: session.subscription,
+            stripe_customer_id: customer,
+            stripe_subscription_id: subscription,
             status: 'active',
-            price_id: session.line_items.data[0].price.id,
-            interval: session.metadata.interval,
-            is_guest: session.metadata.isGuest === 'true',
-            guest_email: session.customer_email,
-            current_period_end: new Date(session.expires_at * 1000).toISOString(),
-          })
-          .select()
-          .single();
-
-        if (error) {
-          console.error('Error creating subscription:', error);
-          throw error;
-        }
-
-        // If it's a guest checkout, create a new user account
-        if (session.metadata.isGuest === 'true') {
-          const { data: user, error: userError } = await supabase.auth.signUp({
-            email: session.customer_email,
-            password: Math.random().toString(36).slice(-8), // Generate random password
-            options: {
-              data: {
-                is_guest_account: true,
-                subscription_id: subscription.id,
-              },
-            },
+            interval: metadata.interval,
+            is_guest: metadata.isGuest === 'true',
           });
 
-          if (userError) {
-            console.error('Error creating guest user:', userError);
-            throw userError;
-          }
-
-          // Send welcome email with login instructions
-          // You can implement this using your preferred email service
+        if (error) {
+          console.error('Error updating subscription:', error);
+          return res.status(500).json({ error: 'Error updating subscription' });
         }
 
         break;
@@ -78,15 +58,12 @@ export async function POST(request) {
         // Update subscription status in Supabase
         const { error } = await supabase
           .from('subscriptions')
-          .update({
-            status: subscription.status,
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-          })
+          .update({ status: subscription.status })
           .eq('stripe_subscription_id', subscription.id);
 
         if (error) {
-          console.error('Error updating subscription:', error);
-          throw error;
+          console.error('Error updating subscription status:', error);
+          return res.status(500).json({ error: 'Error updating subscription status' });
         }
 
         break;
@@ -98,30 +75,21 @@ export async function POST(request) {
         // Update subscription status in Supabase
         const { error } = await supabase
           .from('subscriptions')
-          .update({
-            status: 'canceled',
-            canceled_at: new Date().toISOString(),
-          })
+          .update({ status: 'canceled' })
           .eq('stripe_subscription_id', subscription.id);
 
         if (error) {
-          console.error('Error canceling subscription:', error);
-          throw error;
+          console.error('Error updating subscription status:', error);
+          return res.status(500).json({ error: 'Error updating subscription status' });
         }
 
         break;
       }
     }
 
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    res.status(200).json({ received: true });
   } catch (error) {
-    console.error('Webhook error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error('Error processing webhook:', error);
+    res.status(500).json({ error: 'Error processing webhook' });
   }
 } 
