@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 const Login = () => {
@@ -8,10 +8,13 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { signIn, signInWithGoogle, user } = useAuth()
+  const navigate = useNavigate()
 
-  if (user) {
-    return <Navigate to="/dashboard" replace />
-  }
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [user, navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -71,7 +74,10 @@ const Login = () => {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onInput={(e) => {
+                  e.stopPropagation();
+                  setEmail(e.target.value);
+                }}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-dad-blue-gray placeholder-dad-olive text-dad-dark rounded-md focus:outline-none focus:ring-dad-dark focus:border-dad-dark focus:z-10 sm:text-sm"
                 placeholder="Enter your email"
               />

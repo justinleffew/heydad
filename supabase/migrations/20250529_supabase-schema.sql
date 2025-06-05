@@ -13,6 +13,7 @@ CREATE TABLE videos (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL,
+  notes TEXT,
   file_path TEXT NOT NULL,
   thumbnail_path TEXT,
   unlock_type TEXT NOT NULL CHECK (unlock_type IN ('now', 'age', 'date', 'milestone')),

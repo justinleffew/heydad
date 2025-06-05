@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
-import { Video, Calendar, Clock, Users, Play, Lock, Unlock, Share, AlertCircle, CheckCircle2, Filter, ChevronDown, ChevronUp, Sparkles, Gift, Camera, User, Search, Plus } from 'lucide-react'
+import { Video, Calendar, Clock, Users, Play, Lock, Unlock, Share, AlertCircle, CheckCircle2, Filter, ChevronDown, ChevronUp, Sparkles, Gift, Camera, User, Search, Plus, Badge } from 'lucide-react'
 import VideoPlayer from '../components/VideoPlayer'
 
 const Videos = () => {
@@ -255,17 +255,14 @@ const Videos = () => {
 
   const handlePlayVideo = async (video) => {
     try {
-      const { data: { signedUrl }, error } = await supabase
-        .storage
-        .from('videos')
-        .createSignedUrl(video.file_path, 3600) // URL valid for 1 hour
-
-      if (error) throw error
+      if (!video.cloudflare_video_id) {
+        throw new Error('Video not found on Cloudflare')
+      }
 
       setSelectedVideo(video)
-      setVideoUrl(signedUrl)
+      setVideoUrl(`https://customer-${import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID}.cloudflarestream.com/${video.cloudflare_video_id}`)
     } catch (error) {
-      console.error('Error getting signed URL:', error)
+      console.error('Error playing video:', error)
       alert('Error playing video. Please try again.')
     }
   }
@@ -567,23 +564,14 @@ const Videos = () => {
                       <Clock className="w-4 h-4 mr-1" />
                       {formatDuration(video.duration)}
                     </div>
-                    {/* Status Badge Overlay */}
-                    <div className={`absolute bottom-2 right-2 px-2 py-1 rounded-md text-sm font-medium ${
-                      unlockStatus.isUnlocked 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-amber-500 text-white'
-                    }`}>
-                      {unlockStatus.isUnlocked ? (
-                        <div className="flex items-center">
-                          <Unlock className="w-4 h-4 mr-1" />
-                          Available
-                        </div>
-                      ) : (
-                        <div className="flex items-center">
-                          <Lock className="w-4 h-4 mr-1" />
-                          {unlockStatus.description}
-                        </div>
-                      )}
+                    {/* Unlock Badge - Enhanced */}
+                    <div className="absolute top-2 right-2">
+                      <div className="bg-[#FF9651] text-dad-white px-3 py-1 rounded-lg font-heading font-bold text-xs shadow-medium flex items-center">
+                        <Badge className="w-3 h-3 mr-1" />
+                        {video.unlock_type === 'age' ? `Age ${video.unlock_age}` : 
+                         video.unlock_type === 'date' ? new Date(video.unlock_date).toLocaleDateString() :
+                         video.unlock_type === 'milestone' ? 'Milestone' : 'Unlocked'}
+                      </div>
                     </div>
                   </div>
 
@@ -700,23 +688,14 @@ const Videos = () => {
                         <Clock className="w-4 h-4 mr-1" />
                         {formatDuration(video.duration)}
                       </div>
-                      {/* Status Badge Overlay */}
-                      <div className={`absolute bottom-2 right-2 px-2 py-1 rounded-md text-sm font-medium ${
-                        unlockStatus.isUnlocked 
-                          ? 'bg-green-600 text-white' 
-                          : 'bg-amber-500 text-white'
-                      }`}>
-                        {unlockStatus.isUnlocked ? (
-                          <div className="flex items-center">
-                            <Unlock className="w-4 h-4 mr-1" />
-                            Available
-                          </div>
-                        ) : (
-                          <div className="flex items-center">
-                            <Lock className="w-4 h-4 mr-1" />
-                            {unlockStatus.description}
-                          </div>
-                        )}
+                      {/* Unlock Badge - Enhanced */}
+                      <div className="absolute top-2 right-2">
+                        <div className="bg-[#FF9651] text-dad-white px-3 py-1 rounded-lg font-heading font-bold text-xs shadow-medium flex items-center">
+                          <Badge className="w-3 h-3 mr-1" />
+                          {video.unlock_type === 'age' ? `Age ${video.unlock_age}` : 
+                           video.unlock_type === 'date' ? new Date(video.unlock_date).toLocaleDateString() :
+                           video.unlock_type === 'milestone' ? 'Milestone' : 'Unlocked'}
+                        </div>
                       </div>
                     </div>
 

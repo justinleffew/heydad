@@ -5,6 +5,11 @@ import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
 import { VIDEO_PROMPTS, PROMPT_CATEGORIES, getRandomPrompts, getRandomPromptsFromCategory, getAllCategories } from '../data/prompts'
 import { Video, Upload, Play, Square, ArrowLeft, Clock, Lightbulb, RefreshCw, X, Heart, Briefcase, GraduationCap, Target, Users, Film, Star, BookOpen, Search, ArrowRight } from 'lucide-react'
+import * as tus from 'tus-js-client'
+
+// Cloudflare configuration
+const CLOUDFLARE_ACCOUNT_ID = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID
+const CLOUDFLARE_API_TOKEN = import.meta.env.VITE_CLOUDFLARE_API_TOKEN
 
 const Record = () => {
   const [isRecording, setIsRecording] = useState(false)
@@ -14,6 +19,7 @@ const Record = () => {
   const [children, setChildren] = useState([])
   const [selectedChildren, setSelectedChildren] = useState([])
   const [title, setTitle] = useState('')
+  const [notes, setNotes] = useState('')
   const [unlockType, setUnlockType] = useState('now')
   const [unlockAge, setUnlockAge] = useState('')
   const [unlockDate, setUnlockDate] = useState('')
@@ -265,9 +271,9 @@ const Record = () => {
   const handleFileUpload = (event) => {
     const file = event.target.files[0]
     if (file) {
-      // Check file size (max 200MB)
-      if (file.size > 200 * 1024 * 1024) {
-        setError('File size must be less than 200MB')
+      // Check file size (max 400MB)
+      if (file.size > 400 * 1024 * 1024) {
+        setError('File size must be less than 400MB')
         return
       }
 
@@ -335,6 +341,61 @@ const Record = () => {
     )
   }
 
+  const uploadVideoToCloudflare = async (file, onProgress) => {
+    try {
+      // Step 1: Request upload URL from our API endpoint
+      console.log('Requesting upload URL...');
+      
+      const res = await fetch('/api/createStreamUploadUrl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: user.id
+        })
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to get upload URL: ${res.status} ${errorText}`);
+      }
+
+      const { uploadURL, cloudflareVideoId } = await res.json();
+
+      console.log('Successfully got upload URL:', {
+        uploadURL,
+        cloudflareVideoId
+      });
+
+      // Step 2: Upload video to Cloudflare
+      const uploadRes = await fetch(uploadURL, {
+        method: 'PUT',
+        body: file,
+        mode: 'cors',
+        credentials: 'omit'
+      }).catch(error => {
+        console.error('Network error during video upload:', error);
+        throw new Error(`Network error during upload: ${error.message}`);
+      });
+
+      if (!uploadRes.ok) {
+        const uploadErrorText = await uploadRes.text();
+        throw new Error(`Failed to upload video to Cloudflare: ${uploadRes.status} ${uploadErrorText}`);
+      }
+
+      onProgress(100); // Upload complete
+
+      return {
+        cloudflareVideoId,
+        url: `https://customer-${import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID}.cloudflarestream.com/${cloudflareVideoId}`
+      };
+    } catch (error) {
+      console.error('Cloudflare upload error:', error);
+      throw error;
+    }
+  };
+
   const handleSave = async () => {
     if (!title.trim()) {
       setError('Please enter a title for your video')
@@ -372,73 +433,23 @@ const Record = () => {
       const thumbnailBlob = await generateThumbnail(recordedBlob)
       setProcessingProgress(20)
       
-      // Upload video to Supabase Storage
-      const fileName = `${user.id}/${Date.now()}.webm`
-      console.log('Starting video upload:', {
-        fileName,
+      // Upload video to Cloudflare
+      console.log('Starting video upload to Cloudflare:', {
         fileSize: recordedBlob.size,
         fileType: recordedBlob.type
       })
 
-      // For files larger than 50MB, use chunked upload
-      if (recordedBlob.size > 50 * 1024 * 1024) {
-        const chunkSize = 5 * 1024 * 1024 // 5MB chunks
-        const chunks = Math.ceil(recordedBlob.size / chunkSize)
-        
-        for (let i = 0; i < chunks; i++) {
-          const start = i * chunkSize
-          const end = Math.min(start + chunkSize, recordedBlob.size)
-          const chunk = recordedBlob.slice(start, end)
-          
-          const { data: chunkData, error: chunkError } = await supabase.storage
-            .from('videos')
-            .upload(`${fileName}.part${i}`, chunk, {
-              cacheControl: '3600',
-              upsert: true
-            })
-
-          if (chunkError) {
-            console.error('Chunk upload error:', chunkError)
-            throw new Error(`Chunk upload failed: ${chunkError.message}`)
-          }
-
-          // Update progress based on chunks
-          const progress = Math.round(((i + 1) / chunks) * 40)
-          setProcessingProgress(progress)
+      const uploadData = await uploadVideoToCloudflare(
+        recordedBlob,
+        (progress) => {
+          // Scale progress from 20-60% (since we have other operations before and after)
+          const scaledProgress = 20 + (progress * 0.4)
+          setProcessingProgress(Math.round(scaledProgress))
         }
+      )
 
-        // After all chunks are uploaded, create the final file
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('videos')
-          .upload(fileName, recordedBlob, {
-            cacheControl: '3600',
-            upsert: true
-          })
-
-        if (uploadError) {
-          console.error('Final upload error:', uploadError)
-          throw new Error(`Final upload failed: ${uploadError.message}`)
-        }
-
-        console.log('Video upload successful:', uploadData)
-      } else {
-        // For smaller files, use direct upload
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('videos')
-          .upload(fileName, recordedBlob, {
-            cacheControl: '3600',
-            upsert: false
-          })
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError)
-          throw new Error(`Upload failed: ${uploadError.message}`)
-        }
-
-        console.log('Video upload successful:', uploadData)
-      }
-      
-      setProcessingProgress(40)
+      console.log('Video upload successful:', uploadData)
+      setProcessingProgress(60)
 
       // Upload thumbnail to Supabase Storage
       const thumbnailFileName = `${user.id}/${Date.now()}_thumb.jpg`
@@ -447,13 +458,14 @@ const Record = () => {
         .upload(thumbnailFileName, thumbnailBlob)
 
       if (thumbnailUploadError) throw thumbnailUploadError
-      setProcessingProgress(60)
+      setProcessingProgress(80)
 
       // Create video record
       const videoData = {
         user_id: user.id,
         title: title.trim(),
-        file_path: uploadData.path,
+        notes: notes.trim(),
+        cloudflare_video_id: uploadData.cloudflareVideoId,
         thumbnail_path: thumbnailUploadData.path,
         unlock_type: unlockType,
         unlock_age: unlockType === 'age' ? parseInt(unlockAge) : null,
@@ -471,7 +483,7 @@ const Record = () => {
         .single()
 
       if (videoError) throw videoError
-      setProcessingProgress(80)
+      setProcessingProgress(90)
 
       // Create video-children relationships
       const videoChildrenData = selectedChildren.map(childId => ({
@@ -484,7 +496,7 @@ const Record = () => {
         .insert(videoChildrenData)
 
       if (relationError) throw relationError
-      setProcessingProgress(90)
+      setProcessingProgress(95)
 
       // Update video status to completed
       const { error: updateError } = await supabase
@@ -501,6 +513,7 @@ const Record = () => {
 
       navigate('/dashboard')
     } catch (error) {
+      console.error('Upload error:', error)
       setError(error.message)
       setProcessingError(error.message)
       setProcessingStatus('failed')
@@ -848,6 +861,17 @@ const Record = () => {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Give your legacy video a meaningful title..."
                 className="w-full px-3 py-2 border border-dad-blue-gray rounded-md focus:outline-none focus:ring-dad-dark focus:border-dad-dark"
+              />
+            </div>
+
+            {/* Video Notes */}
+            <div className="bg-white border border-dad-blue-gray rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-dad-dark mb-4">Additional Notes</h3>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add any additional context, thoughts, or notes about this video message..."
+                className="w-full px-3 py-2 border border-dad-blue-gray rounded-md focus:outline-none focus:ring-dad-dark focus:border-dad-dark min-h-[100px] resize-y"
               />
             </div>
 

@@ -13,6 +13,7 @@ import About from './pages/About'
 import Ideas from './pages/Ideas'
 import PricingPage from './components/PricingPage'
 import SuccessPage from './components/SuccessPage'
+import LandingPage from './pages/LandingPage'
 import { testConnection } from './lib/supabase'
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
     <AuthProvider>
       <div className="min-h-screen bg-dad-white">
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/pricing" element={<PricingPage />} />
@@ -64,7 +66,6 @@ function App() {
               <About />
             </ProtectedRoute>
           } />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </div>
     </AuthProvider>

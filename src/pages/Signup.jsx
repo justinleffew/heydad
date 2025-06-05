@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 const Signup = () => {
@@ -9,6 +9,7 @@ const Signup = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const navigate = useNavigate()
   const { signUp, signInWithGoogle, user } = useAuth()
 
   if (user) {
@@ -51,6 +52,10 @@ const Signup = () => {
     setLoading(false)
   }
 
+  const handleMomPurchase = () => {
+    navigate('/pricing')
+  }
+
   return (
     <div className="min-h-screen bg-dad-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -75,6 +80,52 @@ const Signup = () => {
               {message}
             </div>
           )}
+
+          {/* Google Sign In Button */}
+          <div>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-dad-blue-gray text-sm font-medium rounded-md text-dad-dark bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-dad-dark disabled:opacity-50"
+            >
+              Continue with Google
+            </button>
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-dad-blue-gray" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-dad-white text-dad-olive">Or</span>
+            </div>
+          </div>
+
+          {/* Mom Purchase Button */}
+          <div className="p-4 bg-dad-olive bg-opacity-10 border-2 border-dad-olive rounded-lg">
+            <button
+              type="button"
+              onClick={handleMomPurchase}
+              className="w-full text-left"
+            >
+              <h3 className="text-xl font-bold text-dad-dark mb-2">
+                I'm a mom and want to purchase for my husband
+              </h3>
+              <p className="text-sm text-dad-olive">
+                Gift your husband a meaningful way to create lasting memories for your children. No account needed - just choose a plan.
+              </p>
+            </button>
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-dad-blue-gray" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-dad-white text-dad-olive">Or sign up with email</span>
+            </div>
+          </div>
           
           <div className="space-y-4">
             <div>
@@ -136,26 +187,6 @@ const Signup = () => {
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-dad-dark hover:bg-dad-olive focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-dad-dark disabled:opacity-50"
             >
               {loading ? 'Creating account...' : 'Create account'}
-            </button>
-          </div>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-dad-blue-gray" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-dad-white text-dad-olive">Or continue with</span>
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-dad-blue-gray text-sm font-medium rounded-md text-dad-dark bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-dad-dark disabled:opacity-50"
-            >
-              Continue with Google
             </button>
           </div>
 

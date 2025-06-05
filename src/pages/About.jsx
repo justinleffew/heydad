@@ -473,8 +473,8 @@ const About = () => {
                       <h3 className="font-semibold text-dad-dark">Mailing Address</h3>
                       <p className="text-dad-olive">
                         Hey Dad Inc.<br />
-                        123 Legacy Lane<br />
-                        Family City, FC 12345<br />
+                        30 N Gould St Ste R<br />
+                        Sheridan, WY 82801<br />
                         United States
                       </p>
                     </div>

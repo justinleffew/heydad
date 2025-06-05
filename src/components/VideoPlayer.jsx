@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Play, Pause, Clock, Plus, X, Save } from 'lucide-react'
 
 const VideoPlayer = ({ videoUrl, onClose }) => {
-  const videoRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -11,16 +10,30 @@ const VideoPlayer = ({ videoUrl, onClose }) => {
   const [newNote, setNewNote] = useState('')
 
   useEffect(() => {
-    const video = videoRef.current
-    if (video) {
-      video.addEventListener('loadedmetadata', () => {
-        setDuration(video.duration)
-      })
-      video.addEventListener('timeupdate', () => {
-        setCurrentTime(video.currentTime)
-      })
+    // Load Cloudflare player script
+    const script = document.createElement('script')
+    script.src = 'https://embed.cloudflarestream.com/embed/r4xu.fla9.latest.js'
+    script.async = true
+    document.body.appendChild(script)
+
+    return () => {
+      document.body.removeChild(script)
     }
   }, [])
+
+  useEffect(() => {
+    if (videoUrl) {
+      // Initialize Cloudflare player
+      const player = new window.Stream(videoUrl, {
+        controls: false,
+        autoplay: true,
+        onPlay: () => setIsPlaying(true),
+        onPause: () => setIsPlaying(false),
+        onTimeUpdate: (time) => setCurrentTime(time),
+        onDurationChange: (duration) => setDuration(duration)
+      })
+    }
+  }, [videoUrl])
 
   const formatTime = (time) => {
     if (!time || isNaN(time)) return '0:00'
@@ -30,11 +43,12 @@ const VideoPlayer = ({ videoUrl, onClose }) => {
   }
 
   const togglePlay = () => {
-    if (videoRef.current) {
+    if (window.Stream) {
+      const player = window.Stream.getPlayer()
       if (isPlaying) {
-        videoRef.current.pause()
+        player.pause()
       } else {
-        videoRef.current.play()
+        player.play()
       }
       setIsPlaying(!isPlaying)
     }
@@ -56,10 +70,11 @@ const VideoPlayer = ({ videoUrl, onClose }) => {
   }
 
   const jumpToTime = (time) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = time
+    if (window.Stream) {
+      const player = window.Stream.getPlayer()
+      player.seek(time)
+      player.play()
       setIsPlaying(true)
-      videoRef.current.play()
     }
   }
 
@@ -70,12 +85,7 @@ const VideoPlayer = ({ videoUrl, onClose }) => {
           {/* Video Section */}
           <div className="flex-1">
             <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                className="w-full h-full"
-                autoPlay
-              />
+              <div id="player" className="w-full h-full" />
               
               {/* Custom Controls */}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
